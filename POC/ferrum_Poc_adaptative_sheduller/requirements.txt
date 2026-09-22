@@ -1,0 +1,21 @@
+# ferrum_Poc_adaptative_sheduller - Requirements (Garuda Linux / Arch)
+
+# 1) Dépendances système (pacman)
+base-devel
+rustup
+qemu-base
+qemu-desktop
+llvm
+lld
+
+# 2) Outils Rust (à installer avec rustup/cargo)
+# rustup toolchain install nightly
+# rustup default nightly
+# rustup component add rust-src llvm-tools-preview
+# cargo install bootimage
+
+# 3) Vérification rapide
+# rustc --version
+# cargo --version
+# bootimage --help
+# qemu-system-x86_64 --version

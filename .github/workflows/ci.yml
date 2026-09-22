@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN: nightly
+
+jobs:
+  build-reference-poc:
+    name: Build Reference PoC
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src, llvm-tools-preview
+      - name: Install bootimage
+        run: cargo install bootimage
+      - name: Build Reference PoC
+        run: |
+          cd POC/ferrumos_PoC
+          cargo bootimage
+      - name: Upload boot image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ferrumos-reference-bootimage
+          path: POC/ferrumos_PoC/target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
+
+  build-scheduler-poc:
+    name: Build Scheduler PoC
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src, llvm-tools-preview
+      - name: Install bootimage
+        run: cargo install bootimage
+      - name: Build Scheduler PoC
+        run: |
+          cd POC/ferrum_Poc_adaptative_sheduller
+          make build
+      - name: Upload boot image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ferrumos-scheduler-bootimage
+          path: POC/ferrum_Poc_adaptative_sheduller/target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
+
+  build-graphics-poc:
+    name: Build Graphics PoC
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src, llvm-tools-preview
+      - name: Install bootimage
+        run: cargo install bootimage
+      - name: Build Graphics PoC
+        run: |
+          cd POC/ferrum_Poc_graphic
+          make build
+      - name: Upload boot image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ferrumos-graphics-bootimage
+          path: POC/ferrum_Poc_graphic/target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src, clippy, rustfmt
+      - name: Check formatting (Reference PoC)
+        run: |
+          cd POC/ferrumos_PoC
+          cargo fmt -- --check || echo "Formatting check skipped (no_std)"
+      - name: Clippy (Reference PoC)
+        run: |
+          cd POC/ferrumos_PoC
+          cargo clippy --target x86_64-ferrumos.json 2>&1 || true

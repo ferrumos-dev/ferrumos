@@ -1,0 +1,6 @@
+base-devel
+rustup
+qemu-base
+qemu-desktop
+llvm
+lld

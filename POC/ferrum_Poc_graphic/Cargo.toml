@@ -1,0 +1,15 @@
+[workspace]
+resolver = "3"
+members = ["kernel"]
+
+[package]
+name = "ferrumos_graphic"
+version = "0.2.0"
+edition = "2021"
+authors = ["FerrumOS Team"]
+
+[dependencies]
+
+[build-dependencies]
+bootloader = "0.11.15"
+kernel = { path = "kernel", artifact = "bin", target = "x86_64-unknown-none" }

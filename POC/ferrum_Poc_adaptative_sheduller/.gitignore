@@ -1,0 +1,18 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+
+# Cargo / rustup local state
+/.cargo/
+
+# Temporary/debug logs
+*.log
+qemu.log
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# OS noise
+.DS_Store
+Thumbs.db

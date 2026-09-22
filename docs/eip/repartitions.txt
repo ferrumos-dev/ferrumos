@@ -1,0 +1,4 @@
+elias : UI technique non bas niveau (shell, etc)
+rayan : UI technique mémoire dynamique (gestionnaire de taches/performances dynamique avec mémoire opti et stats cpu gpu ram stockage) IA d'opti
+mathias : technique bas niveau kernel, autre technique
+benj : Technique kernel, bootloader, drivers, compatibilité VM, IA d'opti
