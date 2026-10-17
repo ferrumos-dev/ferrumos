@@ -1,0 +1,164 @@
+{
+  "study": "Ferrum OS - host-side package mechanism experiments",
+  "environment": {
+    "python": "3.12.14",
+    "system": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "cryptography": "50.0.2",
+    "target_label": "x86_64-ferrum-demo-abi1"
+  },
+  "results": [
+    {
+      "id": "E01",
+      "scenario": "Assemblage deterministe de deux archives identiques",
+      "status": "PASS",
+      "evidence": {
+        "sha256_run_1": "73d5c30a53f91c35196c87238ffd8484a8eb1f6f22b4592988500f000cc66d68",
+        "sha256_run_2": "73d5c30a53f91c35196c87238ffd8484a8eb1f6f22b4592988500f000cc66d68",
+        "scope": "fixed payload archive assembly, not compilation"
+      }
+    },
+    {
+      "id": "E02",
+      "scenario": "Installation avec dependance exacte et index signe",
+      "status": "PASS",
+      "evidence": {
+        "generation": "generations/g0001",
+        "dependency_order": [
+          "base@1.0.0",
+          "hello@1.0.0"
+        ]
+      }
+    },
+    {
+      "id": "E03",
+      "scenario": "Refus d'une contrainte de versions incompatible",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "DEPENDENCY_CONFLICT",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E04",
+      "scenario": "Refus d'une dependance absente",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "MISSING_DEPENDENCY",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E05",
+      "scenario": "Refus d'un cycle de dependances",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "DEPENDENCY_CYCLE",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E06",
+      "scenario": "Refus d'une cible ou ABI differente",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "INCOMPATIBLE_TARGET",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E07",
+      "scenario": "Refus d'une archive modifiee apres signature de l'index",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "ARCHIVE_DIGEST_MISMATCH",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E08",
+      "scenario": "Refus d'un index dont la signature ne correspond plus",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "INVALID_SIGNATURE",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E09",
+      "scenario": "Refus d'une archive contenant un chemin ../",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "UNSAFE_PATH",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E10",
+      "scenario": "Refus d'une collision de fichiers entre deux paquets",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "FILE_CONFLICT",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E11",
+      "scenario": "Mise a jour coherente du paquet et de sa dependance",
+      "status": "PASS",
+      "evidence": {
+        "new_generation": "generations/g0002",
+        "old_generation_retained": true
+      }
+    },
+    {
+      "id": "E12",
+      "scenario": "Exception injectee avant activation de la generation suivante",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "INJECTED_STOP_BEFORE_ACTIVATION",
+        "active_generation_unchanged": true
+      }
+    },
+    {
+      "id": "E13",
+      "scenario": "Reprise apres une exception injectee pendant la preparation",
+      "status": "PASS",
+      "evidence": {
+        "observed_error": "INJECTED_WRITE_FAILURE",
+        "active_generation_unchanged": true,
+        "temporary_directory_removed": true,
+        "retry_succeeded": true
+      }
+    },
+    {
+      "id": "E14",
+      "scenario": "Retour arriere des logiciels sans restauration des donnees utilisateur",
+      "status": "PASS",
+      "evidence": {
+        "restored_generation": "generations/g0001",
+        "package_versions_restored": true,
+        "mutable_user_data_restored": false
+      }
+    }
+  ],
+  "passed": 14,
+  "total": 14,
+  "limitations": [
+    "Upstream pacman, Guix and Redox tools were not executed.",
+    "No Ferrum kernel, native executable, compiler or QEMU was used.",
+    "Target and ABI checks compare illustrative metadata only.",
+    "Exact version pins only; no ranges, SAT solving or virtual packages.",
+    "Each requested set replaces the complete profile; additive installation is not implemented.",
+    "Single writer, small trusted fixtures; no general archive-size/resource hardening.",
+    "Ed25519 experiment keys are ephemeral; no key rotation, revocation, expiry or replay protection.",
+    "Generation switching uses an OS symlink rename; no filesystem power-loss durability proof.",
+    "Interruptions are injected exceptions during staging and before activation, not physical power cuts.",
+    "A killed process can leave unused staging/generation directories; persistent cleanup is not implemented.",
+    "Retained generations are logical directories, not an enforced read-only store.",
+    "Archive byte reproducibility is not compiler/build reproducibility.",
+    "No performance comparison, restart/migration policy or disk-space optimization is provided."
+  ],
+  "tested_source_sha256": "e22e3297bb8ee8d53f1b52a8f22d307bec861e94720b9de0df0da085fd52ef74",
+  "distributed_source_sha256": "181c6b0d6662a7d8d41d6a16151f712360e30cdc72edcb7fae047fb4707d1fd5",
+  "editorial_note": "Execution timestamp omitted. Only the script docstring was edited after the recorded run; experiment logic and recorded outcomes are unchanged."
+}

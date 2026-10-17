@@ -1,0 +1,37 @@
+FERRUM OS - BILAN CRITIQUE ET NOTE DE RELECTURE
+
+DEFAUT IDENTIFIE PAR ANALYSE DU CODE
+Une premiere version preparait les generations dans un repertoire temporaire
+au nom deterministe. Une exception pendant la preparation pouvait laisser ce
+repertoire en place ; une nouvelle tentative pouvait alors rencontrer le meme
+chemin et echouer avant de reprendre les ecritures.
+
+Le diagnostic provient de la relecture du code. Il n'existe pas, dans les
+preuves livrees, de journal reproduisant cet echec sur cette ancienne version.
+Il ne doit donc pas etre presente comme un echec d'execution observe.
+
+CORRECTION ET VERIFICATION
+Le prototype fourni utilise tempfile.mkdtemp pour les dossiers de preparation
+et un bloc finally pour nettoyer un dossier non valide. L'experience E13
+injecte une erreur pendant la preparation puis controle le succes d'une
+nouvelle tentative sur la version corrigee. Consulter poc/results.json.
+Les 14 resultats conserves n'ont pas ete reexecutes pour cette revision du
+rapport. Le script des experiences et le journal sont inchanges.
+
+INTERPRETATION DES RESULTATS
+E03 a E10 : refus attendus d'operations invalides. L'installation n'aboutit
+pas, mais le test est reussi parce que le controle attendu fonctionne.
+E14 : limite observee du retour arriere, qui restaure les logiciels sans
+restaurer les donnees utilisateur externes. Aucune migration n'est validee.
+E06 : controle d'une metadonnee de cible/ABI uniquement. Cela ne valide pas
+l'execution d'un vrai programme Ferrum.
+
+PISTES NON TESTEES
+Les outils natifs pacman, Guix et Redox n'ont pas ete executes. Leurs
+limitations documentees et les recommandations du rapport ne doivent pas
+etre presentees comme des echecs experimentaux constates sur Ferrum.
+
+FICHE A CONSERVER POUR CHAQUE PROCHAIN ESSAI
+Source et version ; hypothese ; environnement ; protocole ; resultat attendu ;
+resultat obtenu ; ecart ; cause observee ou supposee ; preuve ; decision
+(conserver, adapter, differer, ecarter) ; prochain controle.
