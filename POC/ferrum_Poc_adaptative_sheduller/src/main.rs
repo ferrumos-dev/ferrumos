@@ -81,6 +81,6 @@ pub fn test_runner(tests: &[&dyn Fn()]) {
     use x86_64::instructions::port::Port;
     let mut port = Port::new(0xf4);
     unsafe {
-        port.write(33u32);
+        port.write(0x10u32);
     }
 }
