@@ -28,11 +28,26 @@ impl<A> Locked<A> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct HeapStats {
+    pub heap_size: usize,
+    pub used: usize,
+    pub free: usize,
+    pub live_allocations: usize,
+    pub total_allocations: u64,
+    pub failed_allocations: u64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AllocError;
+
 pub struct BumpAllocator {
     heap_start: usize,
     heap_end: usize,
     next: usize,
     allocations: usize,
+    total_allocations: u64,
+    failed_allocations: u64,
 }
 
 impl BumpAllocator {
@@ -42,6 +57,8 @@ impl BumpAllocator {
             heap_end: 0,
             next: 0,
             allocations: 0,
+            total_allocations: 0,
+            failed_allocations: 0,
         }
     }
 
@@ -50,6 +67,33 @@ impl BumpAllocator {
         self.heap_end = heap_start + heap_size;
         self.next = heap_start;
     }
+
+    pub fn stats(&self) -> HeapStats {
+        HeapStats {
+            heap_size: self.heap_end - self.heap_start,
+            used: self.next - self.heap_start,
+            free: self.heap_end - self.next,
+            live_allocations: self.allocations,
+            total_allocations: self.total_allocations,
+            failed_allocations: self.failed_allocations,
+        }
+    }
+}
+
+pub fn stats() -> HeapStats {
+    ALLOCATOR.lock().stats()
+}
+
+pub fn try_alloc(layout: Layout) -> Result<ptr::NonNull<u8>, AllocError> {
+    let raw = unsafe { ALLOCATOR.alloc(layout) };
+    match ptr::NonNull::new(raw) {
+        Some(nonnull) => Ok(nonnull),
+        None => Err(AllocError),
+    }
+}
+
+pub unsafe fn free(allocation: ptr::NonNull<u8>, layout: Layout) {
+    ALLOCATOR.dealloc(allocation.as_ptr(), layout);
 }
 
 unsafe impl GlobalAlloc for Locked<BumpAllocator> {
@@ -63,10 +107,12 @@ unsafe impl GlobalAlloc for Locked<BumpAllocator> {
         };
 
         if alloc_end > bump.heap_end {
+            bump.failed_allocations += 1;
             ptr::null_mut()
         } else {
             bump.next = alloc_end;
             bump.allocations += 1;
+            bump.total_allocations += 1;
             alloc_start as *mut u8
         }
     }
@@ -74,7 +120,7 @@ unsafe impl GlobalAlloc for Locked<BumpAllocator> {
     unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
         let mut bump = self.lock();
 
-        bump.allocations -= 1;
+        bump.allocations = bump.allocations.saturating_sub(1);
         if bump.allocations == 0 {
             bump.next = bump.heap_start;
         }

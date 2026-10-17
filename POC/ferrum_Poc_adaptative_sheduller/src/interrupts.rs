@@ -5,6 +5,27 @@ use crate::scheduler;
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
 use spin;
+use core::sync::atomic::{AtomicU64, Ordering};
+
+static TICKS: AtomicU64 = AtomicU64::new(0);
+
+pub fn ticks() -> u64 {
+    TICKS.load(Ordering::Relaxed)
+}
+
+pub fn set_masks(primary: u8, secondary: u8) {
+    x86_64::instructions::interrupts::without_interrupts(|| unsafe {
+        PICS.lock().write_masks(primary, secondary)
+    });
+}
+
+pub fn unmask_timer() {
+    set_masks(0b1111_1110, 0b1111_1111);
+}
+
+pub fn mask_all() {
+    set_masks(0b1111_1111, 0b1111_1111);
+}
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -74,6 +95,7 @@ impl InterruptIndex {
 extern "x86-interrupt" fn timer_interrupt_handler(
     _stack_frame: InterruptStackFrame)
 {
+    TICKS.fetch_add(1, Ordering::Relaxed);
     crate::scheduler::tick();
 
     unsafe {
