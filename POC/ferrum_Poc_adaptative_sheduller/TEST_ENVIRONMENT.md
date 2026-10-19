@@ -41,10 +41,25 @@ qemu-system-x86_64 \
 No `-smp`, no `-m`: the default QEMU machine and memory size are used. Exit
 code 33 means every test passed, 35 means a test failed.
 
+## Layout
+
+| Target | Content |
+|---|---|
+| `src/lib.rs` | the kernel as a library, plus the capability tests |
+| `src/main.rs` | the bootable kernel: scheduler, boot screen and shell |
+| `tests/experiment_1.rs` to `tests/experiment_5.rs` | one bootable image per experiment, each with `harness = false` |
+
 ## Running
 
 ```
 cargo test
+```
+
+This builds and boots seven images: one for the capability tests and one per
+experiment. To run a single experiment:
+
+```
+cargo test --test experiment_2
 ```
 
 ## Available measurements
@@ -82,9 +97,11 @@ cargo test
   switch, so the multi-task half of experiment 5 cannot run yet.
 - Writing the PIC masks without disabling interrupts deadlocks the kernel;
   use `interrupts::set_masks` and friends, which guard against it.
-- Experiments share one kernel and one heap, with no reboot in between, so the
-  state one leaves behind reaches the next one. A single long lived allocation
-  anywhere disables the bump reset for every later test, which is why the frame
-  reclaim list is a fixed array rather than a Vec.
+- Each experiment is its own integration test under `tests/`, so it runs in a
+  freshly booted kernel with an untouched heap. Nothing an experiment leaves
+  behind can reach another one.
+- A single long lived allocation disables the bump reset for everything that
+  follows it inside one boot, which is why the frame reclaim list is a fixed
+  array rather than a Vec.
 - The timer handler does not allocate, so experiment 5 never exercises the
   allocator lock from an interrupt.

@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 authors = ["FerrumOS Team"]
 
+[[bin]]
+name = "ferrumos"
+path = "src/main.rs"
+test = false
+
+[lib]
+name = "ferrumos"
+path = "src/lib.rs"
+
 [dependencies]
 bootloader = { version = "0.9.23", features = ["map_physical_memory"] }
 volatile = "0.2.6"
@@ -20,3 +29,23 @@ features = ["spin_no_std"]
 test-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio", "-display", "none"]
 test-success-exit-code = 33
 test-timeout = 300
+
+[[test]]
+name = "experiment_1"
+harness = false
+
+[[test]]
+name = "experiment_2"
+harness = false
+
+[[test]]
+name = "experiment_3"
+harness = false
+
+[[test]]
+name = "experiment_4"
+harness = false
+
+[[test]]
+name = "experiment_5"
+harness = false
