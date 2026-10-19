@@ -1,5 +1,3 @@
-extern crate alloc;
-
 use x86_64::structures::paging::{
     PageTable, OffsetPageTable, PhysFrame, Size4KiB, FrameAllocator
 };
@@ -62,10 +60,13 @@ pub struct FrameStats {
     pub reclaimed_frames: usize,
 }
 
+const RECLAIM_SLOTS: usize = 64;
+
 pub struct BootInfoFrameAllocator {
     memory_map: &'static MemoryMap,
     next: usize,
-    reclaimed: alloc::vec::Vec<PhysFrame>,
+    reclaimed: [Option<PhysFrame>; RECLAIM_SLOTS],
+    reclaimed_len: usize,
 }
 
 impl BootInfoFrameAllocator {
@@ -73,7 +74,8 @@ impl BootInfoFrameAllocator {
         BootInfoFrameAllocator {
             memory_map,
             next: 0,
-            reclaimed: alloc::vec::Vec::new(),
+            reclaimed: [None; RECLAIM_SLOTS],
+            reclaimed_len: 0,
         }
     }
 
@@ -81,14 +83,21 @@ impl BootInfoFrameAllocator {
         let usable = self.usable_frames().count();
         FrameStats {
             usable_frames: usable,
-            allocated_frames: self.next - self.reclaimed.len(),
-            free_frames: usable - self.next + self.reclaimed.len(),
-            reclaimed_frames: self.reclaimed.len(),
+            allocated_frames: self.next - self.reclaimed_len,
+            free_frames: usable - self.next + self.reclaimed_len,
+            reclaimed_frames: self.reclaimed_len,
         }
     }
 
-    pub fn deallocate_frame(&mut self, frame: PhysFrame) {
-        self.reclaimed.push(frame);
+    pub fn deallocate_frame(&mut self, frame: PhysFrame) -> bool {
+        for slot in self.reclaimed.iter_mut() {
+            if slot.is_none() {
+                *slot = Some(frame);
+                self.reclaimed_len += 1;
+                return true;
+            }
+        }
+        false
     }
 
     fn usable_frames(&self) -> impl Iterator<Item = PhysFrame> {
@@ -104,8 +113,11 @@ impl BootInfoFrameAllocator {
 
 unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
-        if let Some(frame) = self.reclaimed.pop() {
-            return Some(frame);
+        for slot in self.reclaimed.iter_mut().rev() {
+            if slot.is_some() {
+                self.reclaimed_len -= 1;
+                return slot.take();
+            }
         }
         let frame = self.usable_frames().nth(self.next);
         self.next += 1;

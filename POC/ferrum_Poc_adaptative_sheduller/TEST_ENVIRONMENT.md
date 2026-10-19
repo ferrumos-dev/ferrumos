@@ -74,10 +74,17 @@ cargo test
 ## Known findings
 
 - Unmapping a page returns its frame, but the 3 page-table frames allocated by
-  the first `map_to` on a fresh address range are never reclaimed.
+  the first `map_to` on a fresh address range are never reclaimed. Later cycles
+  on that same range are frame neutral, as experiment 4 shows over 500 cycles.
 - The bump allocator never reuses freed memory unless every allocation is
   freed, which is the limitation the optimisation cycles must address.
 - The scheduler simulates tasks: it has no per-task stack and no context
   switch, so the multi-task half of experiment 5 cannot run yet.
 - Writing the PIC masks without disabling interrupts deadlocks the kernel;
   use `interrupts::set_masks` and friends, which guard against it.
+- Experiments share one kernel and one heap, with no reboot in between, so the
+  state one leaves behind reaches the next one. A single long lived allocation
+  anywhere disables the bump reset for every later test, which is why the frame
+  reclaim list is a fixed array rather than a Vec.
+- The timer handler does not allocate, so experiment 5 never exercises the
+  allocator lock from an interrupt.

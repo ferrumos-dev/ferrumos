@@ -109,6 +109,21 @@ fn exp2_long_lived_vs_churn() {
 }
 
 #[test_case]
+fn exp3_exhaustion_and_recovery() {
+    experiments::exhaustion_and_recovery();
+}
+
+#[test_case]
+fn exp4_page_cycle() {
+    experiments::page_cycle();
+}
+
+#[test_case]
+fn exp5_under_interrupts() {
+    experiments::under_interrupts();
+}
+
+#[test_case]
 fn trivial_assertion() {
     assert_eq!(1 + 1, 2);
 }
