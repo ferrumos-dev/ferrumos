@@ -1,0 +1,81 @@
+=== Execution 1 ===
+Running 9 tests
+ferrumos::tests::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 3
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=320200
+Running experiment 1 on a freshly booted kernel
+	heap exhaustions forcing a full release: 13
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1625885841
+Running experiment 2 on a freshly booted kernel
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=3614086
+Running experiment 3 on a freshly booted kernel
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	recovery after a full release: complete
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=575544383
+Running experiment 4 on a freshly booted kernel
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30939 after 500 cycles: 30939 (lost: 0)
+	translation errors: 0
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=348911102
+Running experiment 5 on a freshly booted kernel
+	timer interrupts during the run: 10 (scheduler ticks: 10)
+	frames before the page loop: 30925 after: 30922
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1864890996
+
+=== Execution 2 ===
+Running 9 tests
+ferrumos::tests::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 3
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=419596
+Running experiment 1 on a freshly booted kernel
+	heap exhaustions forcing a full release: 13
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1749925275
+Running experiment 2 on a freshly booted kernel
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=3041448
+Running experiment 3 on a freshly booted kernel
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	recovery after a full release: complete
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=562339718
+Running experiment 4 on a freshly booted kernel
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30939 after 500 cycles: 30939 (lost: 0)
+	translation errors: 0
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=348365206
+Running experiment 5 on a freshly booted kernel
+	timer interrupts during the run: 9 (scheduler ticks: 9)
+	frames before the page loop: 30925 after: 30922
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1828146766
+
+=== Execution 3 ===
+Running 9 tests
+ferrumos::tests::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 3
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=433668
+Running experiment 1 on a freshly booted kernel
+	heap exhaustions forcing a full release: 13
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1699740052
+Running experiment 2 on a freshly booted kernel
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=3779418
+Running experiment 3 on a freshly booted kernel
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	recovery after a full release: complete
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=536962080
+Running experiment 4 on a freshly booted kernel
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30939 after 500 cycles: 30939 (lost: 0)
+	translation errors: 0
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=351706355
+Running experiment 5 on a freshly booted kernel
+	timer interrupts during the run: 10 (scheduler ticks: 10)
+	frames before the page loop: 30925 after: 30922
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1926462264
+

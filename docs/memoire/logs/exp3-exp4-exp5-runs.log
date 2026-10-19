@@ -1,0 +1,147 @@
+=== Execution 1 ===
+Running 14 tests
+ferrumos::cycle_counter_advances_and_measures...	8853386 cycles for 10 000 additions	[ok]
+ferrumos::exp1_alloc_free_sequence...	
+	heap exhaustions forcing a full release: 13
+
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1509689334
+[ok]
+ferrumos::exp2_long_lived_vs_churn...	
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=1809718
+[ok]
+ferrumos::exp3_exhaustion_and_recovery...	
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	explicit failures reported: 3 (allocator counter went from 14 to 20)
+	recovery after a full release: complete
+
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=494001274
+[ok]
+ferrumos::exp4_page_cycle...	
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30887 after 500 cycles: 30887 (lost: 0)
+	translation errors: 0
+
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=324787242
+[ok]
+ferrumos::exp5_under_interrupts...	
+	timer interrupts during the run: 8 (scheduler ticks: 10)
+	frames before the page loop: 30887 after: 30884
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	multi task replay: not possible, the scheduler has no context switch
+
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1723107921
+[ok]
+ferrumos::frame_stats_are_consistent...	[ok]
+ferrumos::heap_alloc_roundtrip...	[ok]
+ferrumos::heap_stats_track_allocations...	[ok]
+ferrumos::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 0
+[ok]
+ferrumos::record_format_is_printable...	
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=397030
+[ok]
+ferrumos::timer_ticks_advance_with_interrupts_enabled...	[ok]
+ferrumos::trivial_assertion...	[ok]
+ferrumos::try_alloc_reports_exhaustion...	[ok]
+
+=== Execution 2 ===
+Running 14 tests
+ferrumos::cycle_counter_advances_and_measures...	8728468 cycles for 10 000 additions	[ok]
+ferrumos::exp1_alloc_free_sequence...	
+	heap exhaustions forcing a full release: 13
+
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1544294090
+[ok]
+ferrumos::exp2_long_lived_vs_churn...	
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=1778828
+[ok]
+ferrumos::exp3_exhaustion_and_recovery...	
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	explicit failures reported: 3 (allocator counter went from 14 to 20)
+	recovery after a full release: complete
+
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=508222813
+[ok]
+ferrumos::exp4_page_cycle...	
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30887 after 500 cycles: 30887 (lost: 0)
+	translation errors: 0
+
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=332427880
+[ok]
+ferrumos::exp5_under_interrupts...	
+	timer interrupts during the run: 9 (scheduler ticks: 10)
+	frames before the page loop: 30887 after: 30884
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	multi task replay: not possible, the scheduler has no context switch
+
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1805347612
+[ok]
+ferrumos::frame_stats_are_consistent...	[ok]
+ferrumos::heap_alloc_roundtrip...	[ok]
+ferrumos::heap_stats_track_allocations...	[ok]
+ferrumos::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 0
+[ok]
+ferrumos::record_format_is_printable...	
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=401562
+[ok]
+ferrumos::timer_ticks_advance_with_interrupts_enabled...	[ok]
+ferrumos::trivial_assertion...	[ok]
+ferrumos::try_alloc_reports_exhaustion...	[ok]
+
+=== Execution 3 ===
+Running 14 tests
+ferrumos::cycle_counter_advances_and_measures...	8718950 cycles for 10 000 additions	[ok]
+ferrumos::exp1_alloc_free_sequence...	
+	heap exhaustions forcing a full release: 13
+
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1529649127
+[ok]
+ferrumos::exp2_long_lived_vs_churn...	
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=2020674
+[ok]
+ferrumos::exp3_exhaustion_and_recovery...	
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	explicit failures reported: 3 (allocator counter went from 14 to 20)
+	recovery after a full release: complete
+
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=505607115
+[ok]
+ferrumos::exp4_page_cycle...	
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30887 after 500 cycles: 30887 (lost: 0)
+	translation errors: 0
+
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=342046638
+[ok]
+ferrumos::exp5_under_interrupts...	
+	timer interrupts during the run: 9 (scheduler ticks: 10)
+	frames before the page loop: 30887 after: 30884
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	multi task replay: not possible, the scheduler has no context switch
+
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1755292799
+[ok]
+ferrumos::frame_stats_are_consistent...	[ok]
+ferrumos::heap_alloc_roundtrip...	[ok]
+ferrumos::heap_stats_track_allocations...	[ok]
+ferrumos::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 0
+[ok]
+ferrumos::record_format_is_printable...	
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=408078
+[ok]
+ferrumos::timer_ticks_advance_with_interrupts_enabled...	[ok]
+ferrumos::trivial_assertion...	[ok]
+ferrumos::try_alloc_reports_exhaustion...	[ok]
+

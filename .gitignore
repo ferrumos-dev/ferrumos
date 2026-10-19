@@ -22,3 +22,6 @@ Thumbs.db
 
 # Logs
 *.log
+# Comptes rendus generes localement
+docs/memoire/*.pdf
+docs/memoire/*.html
