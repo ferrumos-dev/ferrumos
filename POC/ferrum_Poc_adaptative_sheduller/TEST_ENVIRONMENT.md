@@ -62,6 +62,18 @@ experiment. To run a single experiment:
 cargo test --test experiment_2
 ```
 
+## Automated runs and regression checks
+
+`make test` (or `bash scripts/kernel_tests/run.sh` from the repository root)
+runs `cargo test --no-fail-fast`, saves the log and a `results.json` in
+`kernel-test-results/`, and checks every `RECORD` against
+`tests/baseline.json`. The same script runs in CI on every change
+(`.github/workflows/kernel-tests.yml`); runs on `main` are kept in the
+`test-results` branch. Details: `docs/tests/AUTOMATISATION_TESTS_QEMU.md`.
+
+When an optimisation improves a measurement on purpose, raise its rule in
+`tests/baseline.json` in the same pull request.
+
 ## Available measurements
 
 | Source | What it gives |

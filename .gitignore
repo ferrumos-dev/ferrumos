@@ -25,3 +25,9 @@ Thumbs.db
 # Comptes rendus generes localement
 docs/memoire/*.pdf
 docs/memoire/*.html
+
+# Resultats locaux des tests noyau (scripts/kernel_tests/run.sh)
+kernel-test-results/
+
+# Python
+__pycache__/

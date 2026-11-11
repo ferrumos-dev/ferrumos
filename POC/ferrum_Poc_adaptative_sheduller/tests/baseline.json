@@ -1,0 +1,42 @@
+{
+  "description": "Valeurs de référence des tests noyau. Une mesure qui sort de sa règle fait échouer la CI. Mettre à jour ce fichier dans la même PR qu'une amélioration voulue (ex. : exp2 passe de 99 à 10000 itérations). Seules les valeurs déterministes ont une règle : les cycles varient jusqu'à 20 % sous QEMU.",
+  "source": "docs/memoire/logs/ (3 exécutions identiques, 17 et 19 octobre 2026)",
+  "expected_suites": [
+    "lib",
+    "experiment_1",
+    "experiment_2",
+    "experiment_3",
+    "experiment_4",
+    "experiment_5"
+  ],
+  "records": {
+    "exp1_alloc_free_sequence": {
+      "iterations": { "min": 10000 },
+      "errors": { "max": 0 },
+      "used_after": { "max": 0 }
+    },
+    "exp2_long_lived_vs_churn": {
+      "iterations": { "min": 99 },
+      "errors": { "max": 0 },
+      "used_after": { "max": 101632 }
+    },
+    "exp3_exhaustion_and_recovery": {
+      "iterations": { "min": 3 },
+      "errors": { "max": 0 },
+      "used_after": { "max": 0 }
+    },
+    "exp4_page_cycle": {
+      "iterations": { "min": 500 },
+      "errors": { "max": 0 },
+      "used_after": { "max": 0 }
+    },
+    "exp5_under_interrupts": {
+      "iterations": { "min": 10200 },
+      "errors": { "max": 0 },
+      "used_after": { "max": 0 }
+    },
+    "box_alloc_64B": {
+      "errors": { "max": 0 }
+    }
+  }
+}

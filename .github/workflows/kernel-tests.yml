@@ -1,0 +1,115 @@
+name: Kernel tests (QEMU)
+
+# Boots every kernel test image under QEMU, keeps the results and compares
+# them with the baseline. See docs/tests/AUTOMATISATION_TESTS_QEMU.md.
+
+on:
+  push:
+    paths:
+      - "POC/ferrum_Poc_adaptative_sheduller/**"
+      - "scripts/kernel_tests/**"
+      - ".github/workflows/kernel-tests.yml"
+  pull_request:
+    paths:
+      - "POC/ferrum_Poc_adaptative_sheduller/**"
+      - "scripts/kernel_tests/**"
+      - ".github/workflows/kernel-tests.yml"
+  workflow_dispatch:
+
+env:
+  # Pinned: newer versions do not build this kernel, see TEST_ENVIRONMENT.md
+  RUST_TOOLCHAIN: nightly-2026-01-15
+  BOOTIMAGE_VERSION: 0.10.3
+  POC_DIR: POC/ferrum_Poc_adaptative_sheduller
+  RESULTS_BRANCH: test-results
+  CARGO_TERM_COLOR: never
+
+jobs:
+  results-tool:
+    name: Results tool self-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m unittest discover -s scripts/kernel_tests -v
+
+  qemu-tests:
+    name: Kernel tests under QEMU
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86
+
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rust-src, llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.POC_DIR }}
+
+      - name: Install bootimage ${{ env.BOOTIMAGE_VERSION }}
+        run: cargo install bootimage --version "$BOOTIMAGE_VERSION" --locked
+
+      - name: Fetch previous results
+        run: |
+          if git fetch --depth=1 origin "$RESULTS_BRANCH" 2>/dev/null; then
+            git show FETCH_HEAD:latest.json > previous-results.json || rm -f previous-results.json
+          fi
+          [ -f previous-results.json ] && echo "comparing with the last run on main" || echo "no previous results yet"
+
+      - name: Run kernel tests
+        env:
+          OUT_DIR: ${{ github.workspace }}/kernel-test-results
+          RESULTS_SOURCE: ci
+          RESULTS_COMMIT: ${{ github.sha }}
+          RESULTS_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: bash scripts/kernel_tests/run.sh --previous previous-results.json
+
+      - name: Publish report
+        if: always()
+        run: |
+          if [ -f kernel-test-results/report.md ]; then
+            cat kernel-test-results/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report: the tests did not run, see the step logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-test-results-${{ github.sha }}
+          path: kernel-test-results/
+          retention-days: 90
+          if-no-files-found: warn
+
+  store-results:
+    name: Keep results history
+    needs: qemu-tests
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.qemu-tests.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: kernel-test-results-history
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kernel-test-results-${{ github.sha }}
+          path: new-results
+
+      - name: Commit results to the ${{ env.RESULTS_BRANCH }} branch
+        run: bash scripts/kernel_tests/store_history.sh new-results

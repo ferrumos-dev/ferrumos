@@ -6,7 +6,7 @@ TARGET_DIR := target/x86_64-ferrumos/debug
 BOOTIMAGE := $(TARGET_DIR)/bootimage-$(PROJECT).bin
 QEMU ?= qemu-system-x86_64
 
-.PHONY: help install boot build run run-serial clean
+.PHONY: help install boot build run run-serial test clean
 
 help:
 	@echo "Targets disponibles:"
@@ -16,6 +16,7 @@ help:
 	@echo "  make run         - Lance QEMU (fenêtre VGA, clavier actif)"
 	@echo "  make run-debug   - Lance QEMU avec logs cpu_reset dans /tmp/qemu_ferrumos.log"
 	@echo "  make run-serial  - Lance QEMU sans fenêtre (sortie terminal série)"
+	@echo "  make test        - Tests noyau sous QEMU + résultats + comparaison baseline"
 	@echo "  make clean       - Nettoie les artefacts"
 
 install:
@@ -55,6 +56,9 @@ run-serial: build
 		-no-shutdown \
 		-nographic \
 		-serial mon:stdio
+
+test:
+	bash ../../scripts/kernel_tests/run.sh
 
 clean:
 	cargo clean
