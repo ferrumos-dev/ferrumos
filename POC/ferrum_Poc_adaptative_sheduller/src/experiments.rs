@@ -201,7 +201,7 @@ pub fn alloc_free_sequence() {
         used_after: stats.used,
         cycles,
     }
-    .report();
+    .report_with(&[("exhaustions", exhaustions)]);
 
     assert_eq!(errors, 0);
 }
@@ -601,5 +601,92 @@ pub fn under_interrupts() {
     .report();
 
     assert!(elapsed_ticks > 0);
+    assert_eq!(errors, 0);
+}
+
+/// Experiment 6 (objective 1): the workload changes size.
+///
+/// Fill the heap with 64 B blocks, free them all, then fill it with 1 KiB
+/// blocks. An allocator that really reuses freed memory reaches the same
+/// 1 KiB capacity as on a fresh heap (100 blocks with no metadata). The
+/// blocks are chained through their own first word, so the experiment needs
+/// no table of its own. `cycles` is the cost of the first 1 KiB allocation,
+/// the one that pays for any deferred work (reclaim of the class lists for
+/// the fixed-size block allocator).
+pub fn phase_change() {
+    const SMALL: usize = 64;
+    const LARGE: usize = 1024;
+    let small = Layout::from_size_align(SMALL, 8).expect("invalid layout");
+    let large = Layout::from_size_align(LARGE, 8).expect("invalid layout");
+    let mut errors = 0u64;
+    let used_before = allocator::stats().used;
+
+    let mut head: *mut usize = core::ptr::null_mut();
+    let mut small_blocks = 0u64;
+    while let Ok(ptr) = allocator::try_alloc(small) {
+        let block = ptr.as_ptr() as *mut usize;
+        unsafe { block.write(head as usize) };
+        head = block;
+        small_blocks += 1;
+    }
+    while !head.is_null() {
+        let next = unsafe { head.read() } as *mut usize;
+        unsafe { allocator::free(NonNull::new_unchecked(head as *mut u8), small) };
+        head = next;
+    }
+
+    let watch = Stopwatch::start();
+    let first = allocator::try_alloc(large);
+    let first_cycles = watch.elapsed();
+
+    let mut large_blocks = 0u64;
+    let mut next_block = first;
+    while let Ok(ptr) = next_block {
+        let block = ptr.as_ptr() as *mut usize;
+        let pattern = (large_blocks % 251) as u8;
+        unsafe {
+            core::ptr::write_bytes(ptr.as_ptr().add(8), pattern, LARGE - 8);
+            block.write(head as usize);
+        }
+        head = block;
+        large_blocks += 1;
+        next_block = allocator::try_alloc(large);
+    }
+
+    let used_full = allocator::stats().used;
+    let mut index = large_blocks;
+    while !head.is_null() {
+        index -= 1;
+        let pattern = (index % 251) as u8;
+        let body = unsafe { core::slice::from_raw_parts((head as *const u8).add(8), LARGE - 8) };
+        if body.iter().any(|byte| *byte != pattern) {
+            errors += 1;
+        }
+        let next = unsafe { head.read() } as *mut usize;
+        unsafe { allocator::free(NonNull::new_unchecked(head as *mut u8), large) };
+        head = next;
+    }
+    let stats = allocator::stats();
+
+    serial_println!(
+        "\n\t{} blocks of {} B, all freed, then {} blocks of {} B ({} B used when full)",
+        small_blocks,
+        SMALL,
+        large_blocks,
+        LARGE,
+        used_full
+    );
+    serial_println!("\tfirst {} B allocation after the change: {} cycles", LARGE, first_cycles);
+
+    Record {
+        name: "exp6_phase_change",
+        iterations: large_blocks,
+        errors,
+        used_before,
+        used_after: stats.used,
+        cycles: first_cycles,
+    }
+    .report_with(&[("small_blocks", small_blocks)]);
+
     assert_eq!(errors, 0);
 }

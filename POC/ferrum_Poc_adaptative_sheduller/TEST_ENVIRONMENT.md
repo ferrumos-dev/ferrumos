@@ -10,7 +10,7 @@ Record any change here before publishing new before/after numbers.
 | Rust | `nightly-2026-01-15` (rustc 1.94.0-nightly) | `rust-toolchain.toml` |
 | `bootimage` | 0.10.3 | installed with `cargo install bootimage --version 0.10.3` |
 | `bootloader` | 0.9.34 | `Cargo.lock` |
-| QEMU | 11.1.0 | host install |
+| QEMU | 11.1.0 (October runs) ; 10.2.1 (12 November runs, Ubuntu package) | host install |
 
 Newer toolchains do not work: `bootimage` 0.10.5 passes `-Zjson-target-spec`,
 and `x86_64` 0.14 stops compiling once the `Step` trait changes.
@@ -22,7 +22,7 @@ and `x86_64` 0.14 stops compiling once the `Step` trait changes.
 | Target | `x86_64-ferrumos.json`, soft-float, `x86-softfloat` ABI | repository root of the PoC |
 | Heap start | `0x_4444_4444_0000` | `src/allocator.rs` |
 | Heap size | 100 KiB | `src/allocator.rs` |
-| Allocator | bump, frees only when the live count reaches zero | `src/allocator.rs` |
+| Allocator | chosen at build time by a `heap-*` Cargo feature, code in `libs/ferrum_alloc`. Default since 12/11/2026: `heap-linked-list`. October measurements: `heap-bump` | `Cargo.toml`, `src/allocator.rs` |
 | PIC masks at boot | all interrupts masked | `src/main.rs` |
 
 ## QEMU invocation
@@ -47,7 +47,7 @@ code 33 means every test passed, 35 means a test failed.
 |---|---|
 | `src/lib.rs` | the kernel as a library, plus the capability tests |
 | `src/main.rs` | the bootable kernel: scheduler, boot screen and shell |
-| `tests/experiment_1.rs` to `tests/experiment_5.rs` | one bootable image per experiment, each with `harness = false` |
+| `tests/experiment_1.rs` to `tests/experiment_6.rs` | one bootable image per experiment, each with `harness = false` (experiment 6 = phase change, objective 1) |
 
 ## Running
 
@@ -117,3 +117,16 @@ When an optimisation improves a measurement on purpose, raise its rule in
   array rather than a Vec.
 - The timer handler does not allocate, so experiment 5 never exercises the
   allocator lock from an interrupt.
+
+## Replaying the measurements of another allocator
+
+The QEMU version changed between October (11.1.0) and November (10.2.1); the
+deterministic values (iterations, errors, used bytes) were identical, only the
+cycles moved. To replay the "before" of objective 1:
+
+```
+cargo test --no-default-features --features heap-bump
+```
+
+Expected with the November baseline: 3 rule violations (exp1 exhaustions,
+exp2 iterations and used bytes). See docs/objectif1/09_integration.md.

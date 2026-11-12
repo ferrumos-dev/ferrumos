@@ -67,7 +67,13 @@ pub struct Record {
 
 impl Record {
     pub fn report(&self) {
-        crate::serial_println!(
+        self.report_with(&[]);
+    }
+
+    /// Same line, followed by extra `key=value` fields (parsed by
+    /// scripts/kernel_tests/results.py like the standard ones).
+    pub fn report_with(&self, extra: &[(&str, u64)]) {
+        crate::serial_print!(
             "\n\tRECORD name={} iterations={} errors={} used_before={} used_after={} cycles={}",
             self.name,
             self.iterations,
@@ -76,5 +82,9 @@ impl Record {
             self.used_after,
             self.cycles
         );
+        for (key, value) in extra {
+            crate::serial_print!(" {}={}", key, value);
+        }
+        crate::serial_println!();
     }
 }

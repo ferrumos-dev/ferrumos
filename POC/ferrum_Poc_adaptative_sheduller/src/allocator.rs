@@ -1,14 +1,57 @@
+//! Kernel heap.
+//!
+//! The allocator itself lives in `libs/ferrum_alloc`, shared with the host
+//! benchmark (research/heap-allocator/bench), so that the code measured on the
+//! host is the code that runs here. One allocator is chosen at build time:
+//!
+//! | Cargo feature        | Allocator                                   |
+//! |----------------------|---------------------------------------------|
+//! | `heap-linked-list`   | free list with coalescing (default, decision of objective 1) |
+//! | `heap-fixed-block`   | fixed-size blocks + reclaim (candidate B')  |
+//! | `heap-bump`          | bump allocator, the October "before"        |
+//!
+//!   cargo test --no-default-features --features heap-bump
+//!
+//! See docs/objectif1/08_note_decision.md for the measurements behind the default.
+
+use core::alloc::{GlobalAlloc, Layout};
+use core::ptr;
+use ferrum_alloc::Heap;
 use x86_64::{
     structures::paging::{
         mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
     },
     VirtAddr,
 };
-use core::ptr;
-use core::alloc::{GlobalAlloc, Layout};
+
+pub use ferrum_alloc::HeapStats;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
+
+#[cfg(any(
+    all(feature = "heap-bump", feature = "heap-linked-list"),
+    all(feature = "heap-bump", feature = "heap-fixed-block"),
+    all(feature = "heap-linked-list", feature = "heap-fixed-block"),
+))]
+compile_error!("choose exactly one heap-* feature (use --no-default-features)");
+
+#[cfg(feature = "heap-bump")]
+pub type KernelHeap = ferrum_alloc::BumpHeap;
+#[cfg(feature = "heap-linked-list")]
+pub type KernelHeap = ferrum_alloc::LinkedListHeap;
+#[cfg(feature = "heap-fixed-block")]
+pub type KernelHeap = ferrum_alloc::FixedBlockHeap;
+
+#[cfg(not(any(
+    feature = "heap-bump",
+    feature = "heap-linked-list",
+    feature = "heap-fixed-block"
+)))]
+compile_error!("no heap-* feature selected");
+
+/// Name of the allocator built into this kernel, printed by the tests.
+pub const HEAP_NAME: &str = KernelHeap::NAME;
 
 use spin::Mutex;
 
@@ -29,56 +72,7 @@ impl<A> Locked<A> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct HeapStats {
-    pub heap_size: usize,
-    pub used: usize,
-    pub free: usize,
-    pub live_allocations: usize,
-    pub total_allocations: u64,
-    pub failed_allocations: u64,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AllocError;
-
-pub struct BumpAllocator {
-    heap_start: usize,
-    heap_end: usize,
-    next: usize,
-    allocations: usize,
-    total_allocations: u64,
-    failed_allocations: u64,
-}
-
-impl BumpAllocator {
-    pub const fn new() -> Self {
-        BumpAllocator {
-            heap_start: 0,
-            heap_end: 0,
-            next: 0,
-            allocations: 0,
-            total_allocations: 0,
-            failed_allocations: 0,
-        }
-    }
-
-    pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
-        self.heap_start = heap_start;
-        self.heap_end = heap_start + heap_size;
-        self.next = heap_start;
-    }
-
-    pub fn stats(&self) -> HeapStats {
-        HeapStats {
-            heap_size: self.heap_end - self.heap_start,
-            used: self.next - self.heap_start,
-            free: self.heap_end - self.next,
-            live_allocations: self.allocations,
-            total_allocations: self.total_allocations,
-            failed_allocations: self.failed_allocations,
-        }
-    }
-}
 
 pub fn stats() -> HeapStats {
     ALLOCATOR.lock().stats()
@@ -86,53 +80,27 @@ pub fn stats() -> HeapStats {
 
 pub fn try_alloc(layout: Layout) -> Result<ptr::NonNull<u8>, AllocError> {
     let raw = unsafe { ALLOCATOR.alloc(layout) };
-    match ptr::NonNull::new(raw) {
-        Some(nonnull) => Ok(nonnull),
-        None => Err(AllocError),
-    }
+    ptr::NonNull::new(raw).ok_or(AllocError)
 }
 
+/// # Safety
+/// `allocation` must come from `try_alloc` with the same `layout`.
 pub unsafe fn free(allocation: ptr::NonNull<u8>, layout: Layout) {
     ALLOCATOR.dealloc(allocation.as_ptr(), layout);
 }
 
-unsafe impl GlobalAlloc for Locked<BumpAllocator> {
+unsafe impl GlobalAlloc for Locked<KernelHeap> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        let mut bump = self.lock();
-
-        let alloc_start = align_up(bump.next, layout.align());
-        let alloc_end = match alloc_start.checked_add(layout.size()) {
-            Some(end) => end,
-            None => return ptr::null_mut(),
-        };
-
-        if alloc_end > bump.heap_end {
-            bump.failed_allocations += 1;
-            ptr::null_mut()
-        } else {
-            bump.next = alloc_end;
-            bump.allocations += 1;
-            bump.total_allocations += 1;
-            alloc_start as *mut u8
-        }
+        self.lock().allocate(layout)
     }
 
-    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
-        let mut bump = self.lock();
-
-        bump.allocations = bump.allocations.saturating_sub(1);
-        if bump.allocations == 0 {
-            bump.next = bump.heap_start;
-        }
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        self.lock().deallocate(ptr, layout)
     }
-}
-
-pub fn align_up(addr: usize, align: usize) -> usize {
-    (addr + align - 1) & !(align - 1)
 }
 
 #[global_allocator]
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+static ALLOCATOR: Locked<KernelHeap> = Locked::new(KernelHeap::new());
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,

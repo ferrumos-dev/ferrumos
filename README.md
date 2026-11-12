@@ -211,6 +211,8 @@ See [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) for the full task breakdown
 
 ## Documentation
 
+- [`docs/objectif1/`](./docs/objectif1/README.md) — EIP mandatory objective 1: kernel heap hard problem (99 → 10 000), research watch, prototypes, decision, integration
+- [`libs/ferrum_alloc/`](./libs/ferrum_alloc/) — Kernel heap allocators (linked list by default), shared by the kernel and the host benchmark
 - [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) — Task distribution, roadmap, team commitments
 - [`docs/dossiers/FerrumOS_Dossiers_Complets.md`](./docs/dossiers/FerrumOS_Dossiers_Complets.md) — Compiled design dossiers (requirements, context, architecture, budgeting, risks)
 - [`docs/presentations/FerrumOS_Presentations_Summary.md`](./docs/presentations/FerrumOS_Presentations_Summary.md) — Presentation summaries

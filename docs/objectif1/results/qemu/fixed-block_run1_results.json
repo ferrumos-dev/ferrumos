@@ -1,0 +1,179 @@
+{
+  "format_version": 1,
+  "status": "passed",
+  "cargo_exit_code": 0,
+  "run": {
+    "date": "2026-11-12T16:05:27+00:00",
+    "commit": "c88bde460d54345626f98877d553bb520564fdf2",
+    "branch": "claude/student-guide-tech-deliverables-99fb46",
+    "source": "local"
+  },
+  "environment": {
+    "rustc": "rustc 1.94.0-nightly (86a49fd71 2026-01-14)",
+    "bootimage": "bootimage 0.10.3",
+    "qemu": "QEMU emulator version 10.2.1 (Debian 1:10.2.1+ds-1ubuntu3.3)",
+    "host": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43"
+  },
+  "suites": [
+    {
+      "id": "lib",
+      "source": "src/lib.rs",
+      "status": "passed",
+      "declared_tests": 9,
+      "tests": [
+        {
+          "name": "ferrumos::tests::cycle_counter_advances_and_measures",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::frame_stats_are_consistent",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::heap_alloc_roundtrip",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::heap_stats_track_allocations",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::page_map_write_unmap_returns_frames",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::record_format_is_printable",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::timer_ticks_advance_with_interrupts_enabled",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::trivial_assertion",
+          "status": "passed"
+        },
+        {
+          "name": "ferrumos::tests::try_alloc_reports_exhaustion",
+          "status": "passed"
+        }
+      ],
+      "panic": null
+    },
+    {
+      "id": "experiment_1",
+      "source": "tests/experiment_1.rs",
+      "status": "passed",
+      "declared_tests": null,
+      "tests": [],
+      "panic": null
+    },
+    {
+      "id": "experiment_2",
+      "source": "tests/experiment_2.rs",
+      "status": "passed",
+      "declared_tests": null,
+      "tests": [],
+      "panic": null
+    },
+    {
+      "id": "experiment_3",
+      "source": "tests/experiment_3.rs",
+      "status": "passed",
+      "declared_tests": null,
+      "tests": [],
+      "panic": null
+    },
+    {
+      "id": "experiment_4",
+      "source": "tests/experiment_4.rs",
+      "status": "passed",
+      "declared_tests": null,
+      "tests": [],
+      "panic": null
+    },
+    {
+      "id": "experiment_5",
+      "source": "tests/experiment_5.rs",
+      "status": "passed",
+      "declared_tests": null,
+      "tests": [],
+      "panic": null
+    },
+    {
+      "id": "experiment_6",
+      "source": "tests/experiment_6.rs",
+      "status": "passed",
+      "declared_tests": null,
+      "tests": [],
+      "panic": null
+    }
+  ],
+  "records": [
+    {
+      "name": "box_alloc_64B",
+      "suite": "lib",
+      "iterations": 1,
+      "errors": 0,
+      "used_before": 0,
+      "used_after": 64,
+      "cycles": 205634
+    },
+    {
+      "name": "exp1_alloc_free_sequence",
+      "suite": "experiment_1",
+      "iterations": 10000,
+      "errors": 0,
+      "used_before": 0,
+      "used_after": 0,
+      "cycles": 840707986,
+      "exhaustions": 0
+    },
+    {
+      "name": "exp2_long_lived_vs_churn",
+      "suite": "experiment_2",
+      "iterations": 10000,
+      "errors": 0,
+      "used_before": 0,
+      "used_after": 256,
+      "cycles": 128332838
+    },
+    {
+      "name": "exp3_exhaustion_and_recovery",
+      "suite": "experiment_3",
+      "iterations": 3,
+      "errors": 0,
+      "used_before": 0,
+      "used_after": 0,
+      "cycles": 232775784
+    },
+    {
+      "name": "exp4_page_cycle",
+      "suite": "experiment_4",
+      "iterations": 500,
+      "errors": 0,
+      "used_before": 0,
+      "used_after": 0,
+      "cycles": 152586800
+    },
+    {
+      "name": "exp5_under_interrupts",
+      "suite": "experiment_5",
+      "iterations": 10200,
+      "errors": 0,
+      "used_before": 0,
+      "used_after": 0,
+      "cycles": 942415132
+    },
+    {
+      "name": "exp6_phase_change",
+      "suite": "experiment_6",
+      "iterations": 100,
+      "errors": 0,
+      "used_before": 0,
+      "used_after": 0,
+      "cycles": 4632592,
+      "small_blocks": 1600
+    }
+  ]
+}

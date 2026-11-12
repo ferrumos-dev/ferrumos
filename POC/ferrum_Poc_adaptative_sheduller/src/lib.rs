@@ -33,6 +33,7 @@ pub fn init(boot_info: &'static BootInfo) {
         unsafe { memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
 
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
+    serial_println!("heap allocator: {}", allocator::HEAP_NAME);
 
     memory::install(mapper, frame_allocator);
 

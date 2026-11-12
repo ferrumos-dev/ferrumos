@@ -19,7 +19,7 @@ au run précédent, et **échoue si quelque chose s'est dégradé**.
  push / PR
     │
     ▼
- cargo test --no-fail-fast        7 images QEMU : tests de capacité + expériences 1 à 5
+ cargo test --no-fail-fast        7 images QEMU : tests de capacité + expériences 1 à 6
     │  (sortie série)
     ▼
  results.py collect  ──►  results.json   statut de chaque image + lignes RECORD

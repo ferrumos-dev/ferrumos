@@ -7,11 +7,15 @@ on:
   push:
     paths:
       - "POC/ferrum_Poc_adaptative_sheduller/**"
+      - "libs/ferrum_alloc/**"
+      - "research/heap-allocator/**"
       - "scripts/kernel_tests/**"
       - ".github/workflows/kernel-tests.yml"
   pull_request:
     paths:
       - "POC/ferrum_Poc_adaptative_sheduller/**"
+      - "libs/ferrum_alloc/**"
+      - "research/heap-allocator/**"
       - "scripts/kernel_tests/**"
       - ".github/workflows/kernel-tests.yml"
   workflow_dispatch:
@@ -34,6 +38,21 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 -m unittest discover -s scripts/kernel_tests -v
+
+  heap-allocator:
+    name: Heap allocator unit tests and benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Unit tests (libs/ferrum_alloc)
+        working-directory: libs/ferrum_alloc
+        run: cargo test
+      - name: Decision prototype benchmark (research/heap-allocator/bench)
+        working-directory: research/heap-allocator/bench
+        # Deterministic columns must match docs/objectif1/06_prototype_decision.md;
+        # timings depend on the runner and are only indicative.
+        run: cargo run --release -- --output bench.json | tee -a "$GITHUB_STEP_SUMMARY"
 
   qemu-tests:
     name: Kernel tests under QEMU

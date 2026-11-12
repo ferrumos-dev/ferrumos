@@ -31,3 +31,10 @@ kernel-test-results/
 
 # Python
 __pycache__/
+
+# Preuves de l'objectif 1 : journaux QEMU conservés volontairement
+!docs/objectif1/results/**/*.log
+
+# Veille locale (scripts/veille/check_sources.py)
+veille-state.json
+digest.md

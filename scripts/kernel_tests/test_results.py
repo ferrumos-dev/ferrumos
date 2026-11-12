@@ -120,9 +120,13 @@ class CompareTest(unittest.TestCase):
             return json.loads(out.read_text(encoding="utf-8"))
 
     def test_baseline_matches_reference_measurements(self):
-        # Every committed reference run must pass the baseline.
-        for log in sorted((ROOT / "docs/memoire/logs").glob("*.log")):
-            _, records = results.parse_log("     Running tests/all.rs (x)\n" + log.read_text(encoding="utf-8"))
+        # Every committed reference run of the current allocator must pass the
+        # baseline. Since 12/11/2026 (objective 1) the reference runs are the
+        # linked-list ones; the October bump logs are checked below.
+        logs = sorted((ROOT / "docs/objectif1/results/qemu").glob("linked-list_run*.log"))
+        self.assertTrue(logs)
+        for log in logs:
+            _, records = results.parse_log(log.read_text(encoding="utf-8"))
             run = {"status": "passed", "suites": [], "records": records}
             baseline = dict(self.baseline, expected_suites=[])
             for rec in records:
@@ -130,8 +134,15 @@ class CompareTest(unittest.TestCase):
                 for field, rule in rules.items():
                     self.assertIsNone(results.check_rule(rec[field], rule), f"{log.name} {rec['name']}.{field}")
             problems, _ = results.compare(run, baseline)
-            # the filtered logs do not contain every record, only check rules on those present
-            self.assertFalse([p for p in problems if "no RECORD line" not in p], log.name)
+            self.assertFalse(problems, log.name)
+
+    def test_october_bump_runs_are_now_rejected(self):
+        # Going back to the bump allocator must fail the raised baseline.
+        log = ROOT / "docs/memoire/logs/exp1-exp2-runs.log"
+        _, records = results.parse_log("     Running tests/all.rs (x)\n" + log.read_text(encoding="utf-8"))
+        run = {"status": "passed", "suites": [], "records": records}
+        problems, _ = results.compare(run, dict(self.baseline, expected_suites=[]))
+        self.assertTrue(any("exp2_long_lived_vs_churn.iterations = 99" in p for p in problems))
 
     def test_regression_is_detected(self):
         run = self.run_collect(FAILING_LOG, 101)
@@ -145,7 +156,10 @@ class CompareTest(unittest.TestCase):
 
     def test_improvement_passes_and_shows_delta(self):
         previous = self.run_collect(PASSING_LOG, 0)
-        better = PASSING_LOG.replace("iterations=99 errors=0", "iterations=10000 errors=0")
+        better = PASSING_LOG.replace(
+            "iterations=99 errors=0 used_before=0 used_after=101632",
+            "iterations=10000 errors=0 used_before=0 used_after=256",
+        )
         current = self.run_collect(better, 0)
         baseline = dict(self.baseline, expected_suites=["lib", "experiment_1", "experiment_2"])
         problems, report = results.compare(current, baseline, previous)
