@@ -147,27 +147,100 @@ def summarise(rows):
         )
 
 
+def check(rows, min_iterations, min_blocks, max_cycles):
+    failures = []
+    warnings = []
+
+    for row in rows:
+        for field in ("exp1_errors", "exp2_errors", "exp3_errors", "exp5_errors"):
+            value = row[field]
+            if value != "" and value != 0:
+                failures.append(
+                    "run %s: %s = %s, expected 0" % (row["run"], field, value)
+                )
+        lost = row["exp4_frames_lost"]
+        if lost != "" and lost != 0:
+            failures.append(
+                "run %s: %d physical frame(s) lost, expected 0" % (row["run"], lost)
+            )
+
+    iterations = [r["i1_iterations"] for r in rows if r["i1_iterations"] != ""]
+    if not iterations:
+        failures.append("no exp2 record found, I1 could not be measured")
+    elif min(iterations) < min_iterations:
+        failures.append(
+            "I1 regression: %d iterations before refusal, floor is %d"
+            % (min(iterations), min_iterations)
+        )
+
+    blocks = [r["i2_live_blocks"] for r in rows if r["i2_live_blocks"] != ""]
+    if blocks and min(blocks) < min_blocks:
+        failures.append(
+            "I2 regression: %d live blocks, floor is %d" % (min(blocks), min_blocks)
+        )
+
+    cycles = [r["i3_cycles_per_iter"] for r in rows if r["i3_cycles_per_iter"] != ""]
+    if cycles and statistics.median(cycles) > max_cycles:
+        warnings.append(
+            "I3 above the ceiling: median %d cycles per iteration, ceiling is %d. "
+            "This is a warning, not a failure: a runner without hardware "
+            "acceleration is noisier than a local machine."
+            % (statistics.median(cycles), max_cycles)
+        )
+
+    for warning in warnings:
+        print("WARNING %s" % warning)
+    for failure in failures:
+        print("FAIL    %s" % failure)
+    if failures:
+        return 1
+    print("PASS    no regression on I1, I2, corruption errors or lost frames")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract objective D indicators from a kernel test log "
-        "and append them to the indicator history."
+        description="Extract objective D indicators from a kernel test log, "
+        "append them to the indicator history, or check them against the "
+        "non regression floors."
     )
     parser.add_argument("log")
-    parser.add_argument("--date", required=True)
-    parser.add_argument("--commit", required=True)
-    parser.add_argument("--label", required=True)
+    parser.add_argument("--date")
+    parser.add_argument("--commit")
+    parser.add_argument("--label")
     parser.add_argument("--allocator", default="bump")
     parser.add_argument(
         "--history",
         default=os.path.join("docs", "memoire", "metrics", "history.csv"),
     )
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="report a non zero exit code on regression, write nothing",
+    )
+    parser.add_argument("--min-iterations", type=int, default=99)
+    parser.add_argument("--min-blocks", type=int, default=90)
+    parser.add_argument("--max-cycles", type=int, default=193036)
     args = parser.parse_args()
 
-    rows = build_rows(args.log, args.date, args.commit, args.label, args.allocator)
+    if not args.check and not all((args.date, args.commit, args.label)):
+        parser.error("--date, --commit and --label are required unless --check is set")
+
+    rows = build_rows(
+        args.log,
+        args.date or "",
+        args.commit or "",
+        args.label or "",
+        args.allocator,
+    )
     if not rows:
         raise SystemExit("no RECORD line found in %s" % args.log)
     summarise(rows)
+    if args.check:
+        raise SystemExit(
+            check(rows, args.min_iterations, args.min_blocks, args.max_cycles)
+        )
     if args.dry_run:
         return
     directory = os.path.dirname(args.history)

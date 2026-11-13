@@ -1,0 +1,83 @@
+name: Memory metrics
+
+on:
+  push:
+    branches: [ main, test/memory ]
+    paths:
+      - 'POC/ferrum_Poc_adaptative_sheduller/**'
+      - 'scripts/metrics_history.py'
+      - '.github/workflows/memory-metrics.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'POC/ferrum_Poc_adaptative_sheduller/**'
+      - 'scripts/metrics_history.py'
+      - '.github/workflows/memory-metrics.yml'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: never
+  BOOTIMAGE_VERSION: 0.10.3
+
+jobs:
+  measure:
+    name: Run the memory experiments and gate on regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install QEMU
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86
+          qemu-system-x86_64 --version
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+          key: cargo-${{ runner.os }}-bootimage${{ env.BOOTIMAGE_VERSION }}-${{ hashFiles('POC/ferrum_Poc_adaptative_sheduller/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-bootimage${{ env.BOOTIMAGE_VERSION }}-
+
+      - name: Install the pinned Rust toolchain
+        working-directory: POC/ferrum_Poc_adaptative_sheduller
+        run: |
+          set -euo pipefail
+          rustup show active-toolchain
+          rustc --version
+          cargo --version
+
+      - name: Install the pinned bootimage
+        run: |
+          set -euo pipefail
+          if bootimage --version 2>/dev/null | grep -q "${BOOTIMAGE_VERSION}"; then
+            echo "bootimage ${BOOTIMAGE_VERSION} already present"
+          else
+            cargo install bootimage --version "${BOOTIMAGE_VERSION}" --force
+          fi
+          bootimage --version
+
+      - name: Run the capability tests and the five experiments
+        working-directory: POC/ferrum_Poc_adaptative_sheduller
+        run: |
+          set -euo pipefail
+          cargo test 2>&1 | tee "${GITHUB_WORKSPACE}/ci-metrics.log"
+
+      - name: Gate on I1, I2, corruption errors and lost frames
+        run: python3 -I scripts/metrics_history.py ci-metrics.log --check
+
+      - name: Keep the raw log as evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-metrics-log
+          path: ci-metrics.log
+          retention-days: 90

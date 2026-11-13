@@ -247,7 +247,7 @@ Pistes ouvertes, par ordre de probabilité :
 | Suite de tests rejouée après chaque boucle : 9 tests de capacité du harnais et 5 expériences | en place |
 | Trois indicateurs relevés à chaque exécution, pas seulement celui qu'on optimise | en place |
 | Historique daté des valeurs, avec le hash du commit, pour distinguer un gain réel du bruit de mesure | **en place** : `docs/memoire/metrics/history.csv`, alimenté par `scripts/metrics_history.py`, 4 sessions de mesure et 12 exécutions au 13 novembre 2026 |
-| Mesure lancée automatiquement par le pipeline, avec échec sur régression de I1 ou I2 | **à créer** |
+| Mesure lancée automatiquement par le pipeline, avec échec sur régression de I1 ou I2 | **en place** : `.github/workflows/memory-metrics.yml` lance les 14 tests à chaque poussée touchant le PoC, puis `metrics_history.py --check` refuse le changement si I1 descend sous 99, si I2 descend sous 90, ou si une erreur de corruption ou un cadre perdu apparaît. Le log brut est conservé 90 jours |
 
 ### Contrôle de stabilité du 13 novembre 2026
 
@@ -272,10 +272,13 @@ par la même personne sur la même machine. Elle ne vaut pas preuve de
 reproductibilité, qui exige qu'un tiers rejoue le protocole. Ce point reste
 ouvert.
 
-Note sur l'automatisation : le pipeline devra se fonder sur I1 et I2 pour
-accepter ou refuser un changement, jamais sur I3. Une machine de forge tourne
-elle aussi sans accélération matérielle, avec une dispersion des cycles au moins
-égale à celle mesurée localement.
+Note sur l'automatisation : le pipeline se fonde sur I1 et I2 pour accepter ou
+refuser un changement, jamais sur I3, qui ne produit qu'un avertissement. Une
+machine de forge tourne elle aussi sans accélération matérielle, avec une
+dispersion des cycles au moins égale à celle mesurée localement. Pour la même
+raison, la CI ne verse pas ses chiffres dans l'historique : elle vérifie
+l'absence de régression, et les valeurs publiées restent celles mesurées dans
+l'environnement de référence.
 
 ---
 

@@ -60,3 +60,30 @@ n'est réutilisé, et le résultat ne dépend d'aucune interprétation.
 I3 ne sert jamais à démontrer un gain. La dispersion observée entre sessions de
 mesure va de 150 305 à 169 974 cycles par itération sans aucun changement de
 code, soit un écart de 13 %.
+
+## Détection automatique des régressions
+
+Le même script sait vérifier un log au lieu de l'enregistrer :
+
+```
+python -I scripts/metrics_history.py <log> --check
+```
+
+Il renvoie un code de sortie non nul si une erreur de corruption apparaît, si
+un cadre physique est perdu, si I1 descend sous 99 itérations ou si I2 descend
+sous 90 blocs. I3 ne provoque qu'un avertissement, jamais un échec.
+
+Les planchers se règlent avec `--min-iterations`, `--min-blocks` et
+`--max-cycles`. **À la boucle 1, le plancher de I1 passera de 99 à la valeur
+obtenue**, pour qu'une régression ultérieure soit détectée.
+
+C'est ce que lance `.github/workflows/memory-metrics.yml` à chaque poussée
+touchant le PoC, avec le log conservé 90 jours en pièce jointe de l'exécution.
+
+### Pourquoi la CI n'écrit pas dans `history.csv`
+
+Une machine de forge n'est pas l'environnement de référence : autre système,
+autre processeur, et toujours sans accélération matérielle. Y mélanger ses
+chiffres rendrait l'historique incomparable. La CI sert donc de garde-fou, elle
+dit « rien n'a régressé ». Les valeurs publiées, elles, restent celles mesurées
+dans l'environnement décrit par `TEST_ENVIRONMENT.md`.
