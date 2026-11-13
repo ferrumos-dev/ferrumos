@@ -1,0 +1,13 @@
+date,commit,label,run,allocator,i1_reuse_pct,i1_iterations,i2_live_blocks,i3_cycles_per_iter,exp1_errors,exp2_errors,exp3_errors,exp4_frames_lost,exp5_errors,source_log
+2026-10-17,702fb41,reference exp1 exp2,1,bump,0.0,99,,134864,0,0,,,,exp1-exp2-runs.log
+2026-10-17,702fb41,reference exp1 exp2,2,bump,0.0,99,,150305,0,0,,,,exp1-exp2-runs.log
+2026-10-17,702fb41,reference exp1 exp2,3,bump,0.0,99,,156060,0,0,,,,exp1-exp2-runs.log
+2026-10-19,5175095,reference exp3 exp4 exp5,1,bump,0.0,99,100,150969,0,0,0,0,0,exp3-exp4-exp5-runs.log
+2026-10-19,5175095,reference exp3 exp4 exp5,2,bump,0.0,99,100,154429,0,0,0,0,0,exp3-exp4-exp5-runs.log
+2026-10-19,5175095,reference exp3 exp4 exp5,3,bump,0.0,99,100,152965,0,0,0,0,0,exp3-exp4-exp5-runs.log
+2026-10-19,a05e1e0,isolation one image per experiment,1,bump,0.0,99,100,162589,0,0,0,0,0,isolation-runs.log
+2026-10-19,a05e1e0,isolation one image per experiment,2,bump,0.0,99,100,174993,0,0,0,0,0,isolation-runs.log
+2026-10-19,a05e1e0,isolation one image per experiment,3,bump,0.0,99,100,169974,0,0,0,0,0,isolation-runs.log
+2026-11-13,b0f8753,stabilite a 26 jours sur la meme machine,1,bump,0.0,99,100,165680,0,0,0,0,0,stabilite-2026-11-13.log
+2026-11-13,b0f8753,stabilite a 26 jours sur la meme machine,2,bump,0.0,99,100,160340,0,0,0,0,0,stabilite-2026-11-13.log
+2026-11-13,b0f8753,stabilite a 26 jours sur la meme machine,3,bump,0.0,99,100,157893,0,0,0,0,0,stabilite-2026-11-13.log

@@ -3,6 +3,10 @@
 Memory measurements are only comparable when taken in this exact environment.
 Record any change here before publishing new before/after numbers.
 
+To reproduce the measurements from scratch, follow `docs/memoire/PROTOCOLE_DE_MESURE.md`
+instead: it lists the prerequisites, the commit to check out, the expected
+values and what to report back.
+
 ## Toolchain
 
 | Component | Version | Pinned in |

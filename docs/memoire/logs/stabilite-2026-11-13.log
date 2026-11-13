@@ -1,0 +1,217 @@
+=== Run 1 : 2026-11-13T17:12:34+01:00 : commit b0f8753 ===
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.44s
+     Running unittests src\lib.rs (target\x86_64-ferrumos\debug\deps\ferrumos-38a5ed19af4a20c9)
+Building bootloader
+   Compiling bootloader v0.9.34 (C:\Users\DELL\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bootloader-0.9.34)
+    Finished `release` profile [optimized + debuginfo] target(s) in 9.18s
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-ferrumos-38a5ed19af4a20c9.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running 9 tests
+ferrumos::tests::cycle_counter_advances_and_measures...	11621710 cycles for 10 000 additions	[ok]
+ferrumos::tests::frame_stats_are_consistent...	[ok]
+ferrumos::tests::heap_alloc_roundtrip...	[ok]
+ferrumos::tests::heap_stats_track_allocations...	[ok]
+ferrumos::tests::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 3
+[ok]
+ferrumos::tests::record_format_is_printable...	
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=492130
+[ok]
+ferrumos::tests::timer_ticks_advance_with_interrupts_enabled...	[ok]
+ferrumos::tests::trivial_assertion...	[ok]
+ferrumos::tests::try_alloc_reports_exhaustion...	[ok]
+     Running tests\experiment_1.rs (target\x86_64-ferrumos\debug\deps\experiment_1-f126796d94e427bf)
+Building bootloader
+   Compiling bootloader v0.9.34 (C:\Users\DELL\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bootloader-0.9.34)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.78s
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_1-f126796d94e427bf.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 1 on a freshly booted kernel
+
+	heap exhaustions forcing a full release: 13
+
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1656797818
+     Running tests\experiment_2.rs (target\x86_64-ferrumos\debug\deps\experiment_2-3efb110c8c0a2107)
+Building bootloader
+   Compiling bootloader v0.9.34 (C:\Users\DELL\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bootloader-0.9.34)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.82s
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_2-3efb110c8c0a2107.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 2 on a freshly booted kernel
+
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=3038022
+     Running tests\experiment_3.rs (target\x86_64-ferrumos\debug\deps\experiment_3-27aa7f920568482c)
+Building bootloader
+   Compiling bootloader v0.9.34 (C:\Users\DELL\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bootloader-0.9.34)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.81s
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_3-27aa7f920568482c.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 3 on a freshly booted kernel
+
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	explicit failures reported: 3 (allocator counter went from 0 to 6)
+	recovery after a full release: complete
+
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=543420540
+     Running tests\experiment_4.rs (target\x86_64-ferrumos\debug\deps\experiment_4-4394bfc1eacb3ff5)
+Building bootloader
+   Compiling bootloader v0.9.34 (C:\Users\DELL\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bootloader-0.9.34)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.81s
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_4-4394bfc1eacb3ff5.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 4 on a freshly booted kernel
+
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30939 after 500 cycles: 30939 (lost: 0)
+	translation errors: 0
+
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=335881970
+     Running tests\experiment_5.rs (target\x86_64-ferrumos\debug\deps\experiment_5-2e7c84852abe2434)
+Building bootloader
+   Compiling bootloader v0.9.34 (C:\Users\DELL\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bootloader-0.9.34)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.82s
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_5-2e7c84852abe2434.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 5 on a freshly booted kernel
+
+	timer interrupts during the run: 10 (scheduler ticks: 10)
+	frames before the page loop: 30925 after: 30922
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	multi task replay: not possible, the scheduler has no context switch
+
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1863353008
+   Doc-tests ferrumos
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+=== Run 2 : 2026-11-13T17:13:23+01:00 : commit b0f8753 ===
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-ferrumos-38a5ed19af4a20c9.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running 9 tests
+ferrumos::tests::cycle_counter_advances_and_measures...	10369806 cycles for 10 000 additions	[ok]
+ferrumos::tests::frame_stats_are_consistent...	[ok]
+ferrumos::tests::heap_alloc_roundtrip...	[ok]
+ferrumos::tests::heap_stats_track_allocations...	[ok]
+ferrumos::tests::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 3
+[ok]
+ferrumos::tests::record_format_is_printable...	
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=485834
+[ok]
+ferrumos::tests::timer_ticks_advance_with_interrupts_enabled...	[ok]
+ferrumos::tests::trivial_assertion...	[ok]
+ferrumos::tests::try_alloc_reports_exhaustion...	[ok]
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_1-f126796d94e427bf.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 1 on a freshly booted kernel
+
+	heap exhaustions forcing a full release: 13
+
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1603397598
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_2-3efb110c8c0a2107.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 2 on a freshly booted kernel
+
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=2999446
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_3-27aa7f920568482c.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 3 on a freshly booted kernel
+
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	explicit failures reported: 3 (allocator counter went from 0 to 6)
+	recovery after a full release: complete
+
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=549101105
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_4-4394bfc1eacb3ff5.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 4 on a freshly booted kernel
+
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30939 after 500 cycles: 30939 (lost: 0)
+	translation errors: 0
+
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=340538050
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_5-2e7c84852abe2434.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 5 on a freshly booted kernel
+
+	timer interrupts during the run: 9 (scheduler ticks: 10)
+	frames before the page loop: 30925 after: 30922
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	multi task replay: not possible, the scheduler has no context switch
+
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1869407513
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+=== Run 3 : 2026-11-13T17:13:55+01:00 : commit b0f8753 ===
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-ferrumos-38a5ed19af4a20c9.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running 9 tests
+ferrumos::tests::cycle_counter_advances_and_measures...	10596710 cycles for 10 000 additions	[ok]
+ferrumos::tests::frame_stats_are_consistent...	[ok]
+ferrumos::tests::heap_alloc_roundtrip...	[ok]
+ferrumos::tests::heap_stats_track_allocations...	[ok]
+ferrumos::tests::page_map_write_unmap_returns_frames...		page table frames kept after unmap: 3
+[ok]
+ferrumos::tests::record_format_is_printable...	
+	RECORD name=box_alloc_64B iterations=1 errors=0 used_before=0 used_after=64 cycles=428156
+[ok]
+ferrumos::tests::timer_ticks_advance_with_interrupts_enabled...	[ok]
+ferrumos::tests::trivial_assertion...	[ok]
+ferrumos::tests::try_alloc_reports_exhaustion...	[ok]
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_1-f126796d94e427bf.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 1 on a freshly booted kernel
+
+	heap exhaustions forcing a full release: 13
+
+	RECORD name=exp1_alloc_free_sequence iterations=10000 errors=0 used_before=0 used_after=0 cycles=1578928856
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_2-3efb110c8c0a2107.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 2 on a freshly booted kernel
+
+	churn of 1024 B survived 99 iterations out of 10000 (102400 B heap, 4 long lived blocks)
+	freed memory is reusable: no
+
+	RECORD name=exp2_long_lived_vs_churn iterations=99 errors=0 used_before=0 used_after=101632 cycles=4090114
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_3-27aa7f920568482c.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 3 on a freshly booted kernel
+
+	capacity per round: 100 / 100 / 100 blocks of 1024 B
+	explicit failures reported: 3 (allocator counter went from 0 to 6)
+	recovery after a full release: complete
+
+	RECORD name=exp3_exhaustion_and_recovery iterations=3 errors=0 used_before=0 used_after=0 cycles=549792952
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_4-4394bfc1eacb3ff5.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 4 on a freshly booted kernel
+
+	page table frames consumed by the first mapping: 3
+	frames free before the loop: 30939 after 500 cycles: 30939 (lost: 0)
+	translation errors: 0
+
+	RECORD name=exp4_page_cycle iterations=500 errors=0 used_before=0 used_after=0 cycles=429676177
+Building bootloader
+Running: `qemu-system-x86_64 -drive format=raw,file=C:\Users\DELL\Documents\EPITECH\EIP\G-EIP-601-ALL-6-1-eip-81\POC\ferrum_Poc_adaptative_sheduller\target\x86_64-ferrumos\debug\deps\bootimage-experiment_5-2e7c84852abe2434.bin -no-reboot -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none`
+Running experiment 5 on a freshly booted kernel
+
+	timer interrupts during the run: 9 (scheduler ticks: 9)
+	frames before the page loop: 30925 after: 30922
+	allocations completed: 5211 refused after exhaustion: 0
+	data corruption under interrupts: none
+	multi task replay: not possible, the scheduler has no context switch
+
+	RECORD name=exp5_under_interrupts iterations=10200 errors=0 used_before=0 used_after=0 cycles=1737137599
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

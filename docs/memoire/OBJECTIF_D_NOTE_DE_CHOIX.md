@@ -246,8 +246,31 @@ Pistes ouvertes, par ordre de probabilité :
 |---|---|
 | Suite de tests rejouée après chaque boucle : 9 tests de capacité du harnais et 5 expériences | en place |
 | Trois indicateurs relevés à chaque exécution, pas seulement celui qu'on optimise | en place |
-| Historique daté des valeurs, avec le hash du commit, pour distinguer un gain réel du bruit de mesure | **à créer**, `docs/memoire/metrics/history.csv` |
+| Historique daté des valeurs, avec le hash du commit, pour distinguer un gain réel du bruit de mesure | **en place** : `docs/memoire/metrics/history.csv`, alimenté par `scripts/metrics_history.py`, 4 sessions de mesure et 12 exécutions au 13 novembre 2026 |
 | Mesure lancée automatiquement par le pipeline, avec échec sur régression de I1 ou I2 | **à créer** |
+
+### Contrôle de stabilité du 13 novembre 2026
+
+La suite complète a été rejouée 3 fois sur le commit `b0f8753`, soit 26 jours
+après la mesure de référence et sans aucun changement de code.
+
+| Indicateur | 17 et 19 octobre 2026 | 13 novembre 2026 | Écart |
+|---|---|---|---|
+| I1, taux de réutilisation | 0 % | 0 % | aucun |
+| I1 dérivé, itérations avant refus | 99 | 99 | aucun |
+| I2, blocs vivants | 100 | 100 | aucun |
+| I3, cycles par itération | 154 429, médiane de 9 exécutions | 160 340, médiane de 3 exécutions | plus 3,8 %, sous le seuil de 25 % |
+| Erreurs de corruption, cadres perdus | 0 | 0 | aucun |
+
+Les grandeurs déterministes sont strictement identiques à 26 jours
+d'intervalle. Seul I3 bouge, de 3,8 %, ce qui est inférieur à la dispersion de
+13 % observée entre deux sessions de mesure d'octobre. La référence est donc
+stable, et le bruit de I3 est quantifié.
+
+Attention au vocabulaire : cette passe est un contrôle de stabilité, réalisé
+par la même personne sur la même machine. Elle ne vaut pas preuve de
+reproductibilité, qui exige qu'un tiers rejoue le protocole. Ce point reste
+ouvert.
 
 Note sur l'automatisation : le pipeline devra se fonder sur I1 et I2 pour
 accepter ou refuser un changement, jamais sur I3. Une machine de forge tourne
