@@ -42,7 +42,8 @@ pub struct FixedBlockHeap {
     failed_allocations: u64,
 }
 
-// Same reasoning as for LinkedListHeap: pointers stay inside the owned region.
+// SAFETY: same reasoning as for `LinkedListHeap`: the class lists and the
+// fallback only point inside the region handed to `init`, owned exclusively.
 unsafe impl Send for FixedBlockHeap {}
 
 impl FixedBlockHeap {
@@ -87,9 +88,13 @@ impl FixedBlockHeap {
     /// Hands every parked block back to the fallback, which merges them.
     fn drain_lists(&mut self) {
         for (class, &size) in BLOCK_SIZES.iter().enumerate() {
+            // SAFETY: a non-null list head is a parked block of this class,
+            // written by `deallocate` and aligned on its class size (>= 16).
             while let Some(block) = unsafe { self.lists[class].as_mut() } {
                 self.lists[class] = block.next;
                 self.parked[class] -= 1;
+                // SAFETY: the block was unlinked just above, so nothing uses
+                // it any more, and it came from `fallback.allocate_raw(size, _)`.
                 let returned =
                     unsafe { self.fallback.deallocate_raw(block as *mut _ as usize, size) };
                 debug_assert!(returned, "a parked block overlapped free memory");
@@ -101,6 +106,7 @@ impl FixedBlockHeap {
     fn allocate_inner(&mut self, layout: Layout) -> *mut u8 {
         match Self::class_of(layout) {
             Some(class) => {
+                // SAFETY: as in `drain_lists`, a non-null head is a parked block.
                 if let Some(block) = unsafe { self.lists[class].as_mut() } {
                     self.lists[class] = block.next;
                     self.parked[class] -= 1;
@@ -127,7 +133,8 @@ impl Heap for FixedBlockHeap {
     const NAME: &'static str = "fixed_block";
 
     unsafe fn init(&mut self, start: usize, size: usize) {
-        self.fallback.init(start, size);
+        // SAFETY: forwards the caller's guarantees on the region unchanged.
+        unsafe { self.fallback.init(start, size) };
     }
 
     fn allocate(&mut self, layout: Layout) -> *mut u8 {
@@ -151,15 +158,22 @@ impl Heap for FixedBlockHeap {
         match Self::class_of(layout) {
             Some(class) => {
                 let block = ptr as *mut FreeBlock;
-                block.write(FreeBlock {
-                    next: self.lists[class],
-                });
+                // SAFETY: the caller guarantees `ptr` is a live block from
+                // `allocate` with this `layout`, so it holds at least one class
+                // size (>= 16 bytes) and is aligned on it: room for the link.
+                unsafe {
+                    block.write(FreeBlock {
+                        next: self.lists[class],
+                    })
+                };
                 self.lists[class] = block;
                 self.parked[class] += 1;
             }
             None => {
                 if let Some((size, _)) = LinkedListHeap::normalize(layout) {
-                    self.fallback.deallocate_raw(ptr as usize, size);
+                    // SAFETY: requests above the largest class were served by
+                    // `fallback.allocate_raw` with this normalized size.
+                    unsafe { self.fallback.deallocate_raw(ptr as usize, size) };
                 }
             }
         }
@@ -193,6 +207,10 @@ impl Heap for FixedBlockHeap {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::undocumented_unsafe_blocks,
+    reason = "tests call the unsafe API on a Region they own, with the layouts they allocated with"
+)]
 mod tests {
     use super::*;
     use crate::test_support::Region;

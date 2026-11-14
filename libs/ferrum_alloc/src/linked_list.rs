@@ -41,8 +41,9 @@ pub struct LinkedListHeap {
     rejected_frees: u64,
 }
 
-// The raw pointers only ever point into the region handed to `init`, which
-// the caller guarantees is exclusively owned by this allocator.
+// SAFETY: the raw pointers only ever point into the region handed to `init`,
+// which the caller of `init` guarantees is exclusively owned by this
+// allocator. Moving the allocator to another thread moves that ownership.
 unsafe impl Send for LinkedListHeap {}
 
 impl LinkedListHeap {
@@ -77,6 +78,8 @@ impl LinkedListHeap {
         let mut cursor = self.head.next;
         while !cursor.is_null() {
             count += 1;
+            // SAFETY: a non-null `next` always points to a hole written by
+            // `allocate_raw` or `deallocate_raw` inside the owned region.
             cursor = unsafe { (*cursor).next };
         }
         count
@@ -86,6 +89,7 @@ impl LinkedListHeap {
         let mut largest = 0;
         let mut cursor = self.head.next;
         while !cursor.is_null() {
+            // SAFETY: same as in `hole_count`, `cursor` is a live hole.
             unsafe {
                 largest = largest.max((*cursor).size);
                 cursor = (*cursor).next;
@@ -98,6 +102,11 @@ impl LinkedListHeap {
     /// Used directly by the fixed-size block allocator.
     pub(crate) fn allocate_raw(&mut self, size: usize, align: usize) -> *mut u8 {
         let mut prev: *mut Hole = &mut self.head;
+        // SAFETY: `prev` is the sentinel or a live hole, and every non-null
+        // `next` is a live hole inside the owned region. `block_end` is
+        // 16-byte aligned (`size` and `block_start` are multiples of 16) and,
+        // when `back > 0`, at least 16 bytes before `hole_end`, so the tail
+        // `Hole` is written in bounds, aligned, on free memory.
         unsafe {
             loop {
                 let hole = (*prev).next;
@@ -148,6 +157,12 @@ impl LinkedListHeap {
     /// Returns `size` bytes at `addr` (already normalized) to the free list,
     /// merging with the neighbouring holes. Returns false, and changes
     /// nothing, if the block overlaps memory that is already free.
+    ///
+    /// # Safety
+    /// `addr..addr + size` must not be used by anything else from now on: it
+    /// is a block returned by `allocate_raw` with this `size`, or the region
+    /// handed to `init`. Bounds, alignment and overlap with free memory are
+    /// checked here.
     pub(crate) unsafe fn deallocate_raw(&mut self, addr: usize, size: usize) -> bool {
         let heap_end = self.heap_start + self.heap_size;
         if addr < self.heap_start
@@ -158,34 +173,41 @@ impl LinkedListHeap {
         }
 
         let head: *mut Hole = &mut self.head;
-        let mut prev = head;
-        while !(*prev).next.is_null() && ((*prev).next as usize) < addr {
-            prev = (*prev).next;
-        }
-        let next = (*prev).next;
+        // SAFETY: `prev` and `next` are the sentinel or live holes of the owned
+        // region. `block` is in bounds and 16-byte aligned (checked above),
+        // and the overlap check guarantees it does not intersect a hole, so
+        // writing a `Hole` header there cannot corrupt the list. The caller
+        // guarantees nothing else uses the block.
+        unsafe {
+            let mut prev = head;
+            while !(*prev).next.is_null() && ((*prev).next as usize) < addr {
+                prev = (*prev).next;
+            }
+            let next = (*prev).next;
 
-        let prev_end = if prev == head {
-            0
-        } else {
-            prev as usize + (*prev).size
-        };
-        if prev_end > addr || (!next.is_null() && addr + size > next as usize) {
-            return false;
-        }
+            let prev_end = if prev == head {
+                0
+            } else {
+                prev as usize + (*prev).size
+            };
+            if prev_end > addr || (!next.is_null() && addr + size > next as usize) {
+                return false;
+            }
 
-        let block = addr as *mut Hole;
-        block.write(Hole { size, next });
+            let block = addr as *mut Hole;
+            block.write(Hole { size, next });
 
-        if !next.is_null() && addr + size == next as usize {
-            (*block).size += (*next).size;
-            (*block).next = (*next).next;
-        }
+            if !next.is_null() && addr + size == next as usize {
+                (*block).size += (*next).size;
+                (*block).next = (*next).next;
+            }
 
-        if prev != head && prev_end == addr {
-            (*prev).size += (*block).size;
-            (*prev).next = (*block).next;
-        } else {
-            (*prev).next = block;
+            if prev != head && prev_end == addr {
+                (*prev).size += (*block).size;
+                (*prev).next = (*block).next;
+            } else {
+                (*prev).next = block;
+            }
         }
 
         self.free += size;
@@ -218,7 +240,9 @@ impl Heap for LinkedListHeap {
         self.free = 0;
         if usable >= GRANULE {
             self.head.next = ptr::null_mut();
-            self.deallocate_raw(aligned_start, usable);
+            // SAFETY: the caller of `init` hands over `start..start + size`
+            // exclusively; the aligned sub-range is inside it.
+            unsafe { self.deallocate_raw(aligned_start, usable) };
         }
     }
 
@@ -239,7 +263,9 @@ impl Heap for LinkedListHeap {
 
     unsafe fn deallocate(&mut self, ptr: *mut u8, layout: Layout) {
         let accepted = match Self::normalize(layout) {
-            Some((size, _)) => self.deallocate_raw(ptr as usize, size),
+            // SAFETY: the caller guarantees `ptr` came from `allocate` with
+            // `layout`, which reserved exactly this normalized size.
+            Some((size, _)) => unsafe { self.deallocate_raw(ptr as usize, size) },
             None => false,
         };
         if accepted {
@@ -266,6 +292,10 @@ impl Heap for LinkedListHeap {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::undocumented_unsafe_blocks,
+    reason = "tests call the unsafe API on a Region they own, with the layouts they allocated with"
+)]
 mod tests {
     use super::*;
     use crate::test_support::Region;
@@ -328,6 +358,8 @@ mod tests {
         let mut heap = heap(&region);
         let layout = Layout::from_size_align(64, 8).unwrap();
         let p = heap.allocate(layout);
+        // Breaks the `deallocate` contract on purpose: the linked list must
+        // detect the second free and leave the heap unchanged.
         unsafe {
             heap.deallocate(p, layout);
             heap.deallocate(p, layout);

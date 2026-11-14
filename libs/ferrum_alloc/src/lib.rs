@@ -12,7 +12,16 @@
 //!
 //! None of them take a lock: the kernel wraps the chosen one in a spin mutex.
 //! See docs/greenlights/objecitf_obligatoire_1/tas_noyau/ for the protocol, the measurements and the decision.
+//!
+//! # `unsafe` policy
+//! An allocator hands out raw memory, so this crate cannot be free of
+//! `unsafe` like the rest of the portable code (normes_rust.md). Instead,
+//! every `unsafe` operation sits in an explicit block, inside `unsafe fn`
+//! too, with a `// SAFETY:` comment naming the invariant it relies on and who
+//! establishes it. The two lints below make Clippy enforce this.
 #![cfg_attr(not(test), no_std)]
+#![deny(unsafe_op_in_unsafe_fn)]
+#![deny(clippy::undocumented_unsafe_blocks)]
 
 mod bump;
 mod fixed_block;
@@ -109,6 +118,7 @@ pub(crate) mod test_support {
     impl Region {
         pub fn new(size: usize) -> Self {
             let layout = Layout::from_size_align(size, 4096).unwrap();
+            // SAFETY: `layout` has a non-zero size (callers pass the heap size).
             let start = unsafe { alloc(layout) } as usize;
             assert_ne!(start, 0);
             Region {
@@ -121,6 +131,8 @@ pub(crate) mod test_support {
 
     impl Drop for Region {
         fn drop(&mut self) {
+            // SAFETY: `start` was returned by `alloc` with this same `layout` in
+            // `new`, and `Drop` runs once.
             unsafe { dealloc(self.start as *mut u8, self.layout) }
         }
     }

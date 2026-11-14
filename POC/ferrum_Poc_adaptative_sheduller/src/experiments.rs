@@ -14,6 +14,11 @@ use x86_64::VirtAddr;
 const MIN_SIZE: usize = 8;
 const MAX_SIZE: usize = 512;
 
+/// A live allocation made by an experiment.
+///
+/// Invariant relied on by every `unsafe` below: `ptr` was returned by
+/// `allocator::try_alloc(layout)` and has not been freed yet. A block is freed
+/// exactly once, when it leaves its `LiveSet` or when it could not enter it.
 #[derive(Clone, Copy)]
 struct Block {
     ptr: NonNull<u8>,
@@ -31,14 +36,15 @@ impl Block {
     }
 
     fn fill(&self) {
+        // SAFETY: `ptr` is a live allocation of `layout.size()` bytes (see `Block`).
         unsafe {
             core::ptr::write_bytes(self.ptr.as_ptr(), self.pattern, self.layout.size());
         }
     }
 
     fn is_intact(&self) -> bool {
-        let slice =
-            unsafe { core::slice::from_raw_parts(self.ptr.as_ptr(), self.layout.size()) };
+        // SAFETY: `ptr` is a live allocation of `layout.size()` bytes (see `Block`).
+        let slice = unsafe { core::slice::from_raw_parts(self.ptr.as_ptr(), self.layout.size()) };
         slice.iter().all(|byte| *byte == self.pattern)
     }
 
@@ -114,6 +120,8 @@ impl<const N: usize> LiveSet<N> {
                 if !block.is_intact() || !block.is_aligned() {
                     *errors += 1;
                 }
+                // SAFETY: the block was just removed from the set, so it is freed once,
+                // with the layout it was allocated with.
                 unsafe { allocator::free(block.ptr, block.layout) };
             }
         }
@@ -141,6 +149,8 @@ pub fn alloc_free_sequence() {
                 if !block.is_aligned() {
                     errors += 1;
                 }
+                // SAFETY: the block was just removed from the set, so it is freed once,
+                // with the layout it was allocated with.
                 unsafe { allocator::free(block.ptr, block.layout) };
             }
             continue;
@@ -180,6 +190,8 @@ pub fn alloc_free_sequence() {
         block.fill();
 
         if !live.insert(block) {
+            // SAFETY: the set is full, so the block was never stored: this is its only
+            // free.
             unsafe { allocator::free(block.ptr, block.layout) };
         }
     }
@@ -235,6 +247,8 @@ pub fn long_lived_vs_churn() {
     while churn < TARGET {
         match allocator::try_alloc(layout) {
             Ok(ptr) => {
+                // SAFETY: `ptr` was just allocated with `layout` (`CHURN_SIZE` bytes) and
+                // is freed once, right after the write.
                 unsafe {
                     core::ptr::write_bytes(ptr.as_ptr(), 0x5A, CHURN_SIZE);
                     allocator::free(ptr, layout);
@@ -305,6 +319,8 @@ pub fn exhaustion_and_recovery() {
                     }
                     block.fill();
                     if !live.insert(block) {
+                        // SAFETY: the set is full, so the block was never stored: this is
+                        // its only free.
                         unsafe { allocator::free(block.ptr, block.layout) };
                         break;
                     }
@@ -322,6 +338,8 @@ pub fn exhaustion_and_recovery() {
         let after_failure = allocator::try_alloc(Layout::from_size_align(8, 8).unwrap());
         if after_failure.is_ok() {
             if let Ok(ptr) = after_failure {
+                // SAFETY: `ptr` was just allocated with this same 8-byte layout and is not
+                // used afterwards.
                 unsafe { allocator::free(ptr, Layout::from_size_align(8, 8).unwrap()) };
             }
         }
@@ -384,7 +402,11 @@ pub fn page_cycle() {
     let free_at_start = memory::frame_stats().free_frames;
 
     memory::with_memory(|mapper, frame_allocator| {
-        let frame = frame_allocator.allocate_frame().expect("no frame available");
+        let frame = frame_allocator
+            .allocate_frame()
+            .expect("no frame available");
+        // SAFETY: the page at `BASE` is reserved for this experiment and unmapped between
+        // cycles; `frame` was just allocated, so the mapping aliases nothing.
         unsafe {
             mapper
                 .map_to(page, frame, flags, frame_allocator)
@@ -402,9 +424,13 @@ pub fn page_cycle() {
     let watch = Stopwatch::start();
     for iteration in 0..CYCLES {
         memory::with_memory(|mapper, frame_allocator| {
-            let frame = frame_allocator.allocate_frame().expect("no frame available");
+            let frame = frame_allocator
+                .allocate_frame()
+                .expect("no frame available");
             let expected = frame.start_address();
 
+            // SAFETY: the page at `BASE` is reserved for this experiment and unmapped
+            // between cycles; `frame` was just allocated, so the mapping aliases nothing.
             unsafe {
                 mapper
                     .map_to(page, frame, flags, frame_allocator)
@@ -418,6 +444,8 @@ pub fn page_cycle() {
             }
 
             let ptr: *mut u64 = page.start_address().as_mut_ptr();
+            // SAFETY: the page was mapped writable just above and is page-aligned, so `ptr`
+            // is valid and aligned for a `u64`.
             unsafe {
                 ptr.write_volatile(0xC0FF_EE00 + iteration);
                 if ptr.read_volatile() != 0xC0FF_EE00 + iteration {
@@ -493,6 +521,8 @@ pub fn under_interrupts() {
                 if !block.is_intact() || !block.is_aligned() {
                     errors += 1;
                 }
+                // SAFETY: the block was just removed from the set, so it is freed once,
+                // with the layout it was allocated with.
                 unsafe { allocator::free(block.ptr, block.layout) };
             }
             continue;
@@ -529,6 +559,8 @@ pub fn under_interrupts() {
         completed += 1;
 
         if !live.insert(block) {
+            // SAFETY: the set is full, so the block was never stored: this is its only
+            // free.
             unsafe { allocator::free(block.ptr, block.layout) };
         }
     }
@@ -539,7 +571,11 @@ pub fn under_interrupts() {
 
     for iteration in 0..PAGE_CYCLES {
         memory::with_memory(|mapper, frame_allocator| {
-            let frame = frame_allocator.allocate_frame().expect("no frame available");
+            let frame = frame_allocator
+                .allocate_frame()
+                .expect("no frame available");
+            // SAFETY: the page at `BASE` is reserved for this experiment and unmapped
+            // between cycles; `frame` was just allocated, so the mapping aliases nothing.
             unsafe {
                 mapper
                     .map_to(page, frame, flags, frame_allocator)
@@ -547,6 +583,8 @@ pub fn under_interrupts() {
                     .flush();
             }
             let ptr: *mut u64 = page.start_address().as_mut_ptr();
+            // SAFETY: the page was mapped writable just above and is page-aligned, so `ptr`
+            // is valid and aligned for a `u64`.
             unsafe {
                 ptr.write_volatile(0xBEEF_0000 + iteration);
                 if ptr.read_volatile() != 0xBEEF_0000 + iteration {
@@ -625,12 +663,18 @@ pub fn phase_change() {
     let mut small_blocks = 0u64;
     while let Ok(ptr) = allocator::try_alloc(small) {
         let block = ptr.as_ptr() as *mut usize;
+        // SAFETY: `block` is a fresh 64-byte allocation aligned on 8: room for one `usize`
+        // link.
         unsafe { block.write(head as usize) };
         head = block;
         small_blocks += 1;
     }
     while !head.is_null() {
+        // SAFETY: `head` is non-null (loop condition) and its first word holds the link
+        // written above.
         let next = unsafe { head.read() } as *mut usize;
+        // SAFETY: `head` is non-null and came from `try_alloc(small)`; it is unlinked here,
+        // so freed once.
         unsafe { allocator::free(NonNull::new_unchecked(head as *mut u8), small) };
         head = next;
     }
@@ -644,6 +688,8 @@ pub fn phase_change() {
     while let Ok(ptr) = next_block {
         let block = ptr.as_ptr() as *mut usize;
         let pattern = (large_blocks % 251) as u8;
+        // SAFETY: `ptr` is a fresh `LARGE`-byte allocation aligned on 8: the link takes the
+        // first word and the pattern fills bytes 8..LARGE.
         unsafe {
             core::ptr::write_bytes(ptr.as_ptr().add(8), pattern, LARGE - 8);
             block.write(head as usize);
@@ -658,11 +704,16 @@ pub fn phase_change() {
     while !head.is_null() {
         index -= 1;
         let pattern = (index % 251) as u8;
+        // SAFETY: `head` is a live `LARGE`-byte block; bytes 8..LARGE were filled above.
         let body = unsafe { core::slice::from_raw_parts((head as *const u8).add(8), LARGE - 8) };
         if body.iter().any(|byte| *byte != pattern) {
             errors += 1;
         }
+        // SAFETY: `head` is non-null (loop condition) and its first word holds the link
+        // written above.
         let next = unsafe { head.read() } as *mut usize;
+        // SAFETY: `head` is non-null and came from `try_alloc(large)`; it is unlinked here,
+        // so freed once.
         unsafe { allocator::free(NonNull::new_unchecked(head as *mut u8), large) };
         head = next;
     }
@@ -676,7 +727,11 @@ pub fn phase_change() {
         LARGE,
         used_full
     );
-    serial_println!("\tfirst {} B allocation after the change: {} cycles", LARGE, first_cycles);
+    serial_println!(
+        "\tfirst {} B allocation after the change: {} cycles",
+        LARGE,
+        first_cycles
+    );
 
     Record {
         name: "exp6_phase_change",

@@ -78,24 +78,39 @@ pub fn stats() -> HeapStats {
     ALLOCATOR.lock().stats()
 }
 
+/// Allocates from the kernel heap. `Err(AllocError)` when the heap cannot
+/// serve `layout`; the heap is left unchanged.
 pub fn try_alloc(layout: Layout) -> Result<ptr::NonNull<u8>, AllocError> {
+    // SAFETY: `GlobalAlloc::alloc` only requires a non-zero size; every
+    // `Heap` also accepts zero-size layouts (rounded up) and returns null on
+    // failure, which is mapped to `AllocError`.
     let raw = unsafe { ALLOCATOR.alloc(layout) };
     ptr::NonNull::new(raw).ok_or(AllocError)
 }
 
+/// Gives back a block from `try_alloc`.
+///
 /// # Safety
-/// `allocation` must come from `try_alloc` with the same `layout`.
+/// `allocation` must come from `try_alloc` with the same `layout` and must
+/// not have been freed already.
 pub unsafe fn free(allocation: ptr::NonNull<u8>, layout: Layout) {
-    ALLOCATOR.dealloc(allocation.as_ptr(), layout);
+    // SAFETY: forwarded from the caller.
+    unsafe { ALLOCATOR.dealloc(allocation.as_ptr(), layout) };
 }
 
+// SAFETY: the spin mutex serializes every access to the heap, which only
+// hands out blocks of its own region that are not in use (`Heap` contract,
+// tested in libs/ferrum_alloc and by the QEMU experiments). Allocation
+// failure returns null, never panics.
 unsafe impl GlobalAlloc for Locked<KernelHeap> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         self.lock().allocate(layout)
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        self.lock().deallocate(ptr, layout)
+        // SAFETY: `GlobalAlloc` callers guarantee `ptr` came from `alloc` on
+        // this allocator with the same `layout`, as `Heap::deallocate` requires.
+        unsafe { self.lock().deallocate(ptr, layout) }
     }
 }
 
@@ -119,11 +134,16 @@ pub fn init_heap(
             .allocate_frame()
             .ok_or(MapToError::FrameAllocationFailed)?;
         let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
+        // SAFETY: the heap range is used by nothing else and `frame` was just
+        // allocated, so the new mapping aliases no existing memory.
         unsafe {
             mapper.map_to(page, frame, flags, frame_allocator)?.flush();
         }
     }
 
+    // SAFETY: `HEAP_START..HEAP_START + HEAP_SIZE` was just mapped writable,
+    // is used by nothing else, is page-aligned (so 16-byte aligned), and
+    // `init_heap` is called once, from `lib::init`.
     unsafe {
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }

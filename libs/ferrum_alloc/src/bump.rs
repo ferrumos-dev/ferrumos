@@ -41,6 +41,7 @@ impl Default for BumpHeap {
 impl Heap for BumpHeap {
     const NAME: &'static str = "bump";
 
+    // No unsafe operation inside: `unsafe` comes from the `Heap` contract.
     unsafe fn init(&mut self, start: usize, size: usize) {
         self.heap_start = start;
         self.heap_end = start + size;

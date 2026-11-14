@@ -8,6 +8,8 @@ pub enum QemuExitCode {
 }
 
 pub fn exit_qemu(exit_code: QemuExitCode) -> ! {
+    // SAFETY: port 0xf4 is QEMU's `isa-debug-exit` device, configured by
+    // `test-args` in Cargo.toml; writing to it stops the virtual machine.
     unsafe {
         let mut port = Port::new(0xf4);
         port.write(exit_code as u32);

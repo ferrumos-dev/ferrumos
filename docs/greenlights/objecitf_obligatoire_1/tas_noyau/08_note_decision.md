@@ -51,7 +51,7 @@ Les deux candidats atteignent tous les seuils fixés à l'avance. La décision s
 |---|---|---|
 | **Complexité O(nombre de trous)** à chaque allocation et libération | Sous une forte fragmentation, le coût croît avec le nombre de trous ; sur `long_run`, il reste à 51–54 ns au p99 | Le banc `long_run` est dans la CI : une dérive sera visible |
 | **Granularité de 16 o** | Une demande de 8 o en consomme 16 | Accepté : pas de demande inférieure à 16 o dans le noyau aujourd'hui |
-| **Code maison à maintenir** (≈ 210 lignes hors tests, 7 éléments `unsafe` : 3 blocs, 3 fonctions, 1 `impl Send`) | Pas de communauté pour corriger nos bogues | 9 tests unitaires, 7 images QEMU, revue des blocs `unsafe` demandée à Benjamin (pôle 1, tâche 1.7) |
+| **Code maison à maintenir** (≈ 210 lignes hors tests, 10 éléments `unsafe` : 6 blocs, 3 fonctions, 1 `impl Send`, chacun justifié par un commentaire `SAFETY` que Clippy exige) | Pas de communauté pour corriger nos bogues | 9 tests unitaires, 7 images QEMU, revue des blocs `unsafe` demandée à Benjamin (pôle 1, tâche 1.7) |
 | **Fragmentation externe possible** (193 ‰ au pire mesuré) | Une demande peut échouer alors que la somme des trous suffirait | La métrique est désormais exposée (`largest_free_block`, `fragmentation_permille`) |
 | **Verrou sans masquage des interruptions** (inchangé) | Un gestionnaire d'interruption qui allouerait pendant une allocation bloquerait le noyau | Limite documentée dans `09_integration.md` ; aucun gestionnaire n'alloue aujourd'hui |
 
