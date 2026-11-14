@@ -40,11 +40,27 @@ jobs:
       - run: python3 -m unittest discover -s scripts/kernel_tests -v
 
   heap-allocator:
-    name: Heap allocator unit tests and benchmark
+    name: Heap allocator format, Clippy, unit tests and benchmark
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      # Same pinned toolchain as the kernel that embeds the crate.
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+      # Blocking checks (normes_rust.md): no `|| true`, exit codes propagate.
+      # ferrum_alloc denies undocumented unsafe blocks, so Clippy also checks
+      # that every unsafe block has its SAFETY comment.
+      - name: Format (libs/ferrum_alloc, research/heap-allocator/bench)
+        run: |
+          cargo fmt --manifest-path libs/ferrum_alloc/Cargo.toml -- --check
+          cargo fmt --manifest-path research/heap-allocator/bench/Cargo.toml -- --check
+      - name: Clippy (libs/ferrum_alloc, research/heap-allocator/bench)
+        run: |
+          cargo clippy --manifest-path libs/ferrum_alloc/Cargo.toml --all-targets -- -D warnings
+          cargo clippy --manifest-path research/heap-allocator/bench/Cargo.toml --locked --all-targets -- -D warnings
       - name: Unit tests (libs/ferrum_alloc)
         working-directory: libs/ferrum_alloc
         run: cargo test
@@ -52,7 +68,7 @@ jobs:
         working-directory: research/heap-allocator/bench
         # Deterministic columns must match docs/greenlights/objecitf_obligatoire_1/tas_noyau/06_prototype_decision.md;
         # timings depend on the runner and are only indicative.
-        run: cargo run --release -- --output bench.json | tee -a "$GITHUB_STEP_SUMMARY"
+        run: cargo run --release --locked -- --output bench.json | tee -a "$GITHUB_STEP_SUMMARY"
 
   qemu-tests:
     name: Kernel tests under QEMU
@@ -110,7 +126,8 @@ jobs:
           name: kernel-test-results-${{ github.sha }}
           path: kernel-test-results/
           retention-days: 90
-          if-no-files-found: warn
+          # Missing results must be visible (ci_cd.md).
+          if-no-files-found: error
 
   store-results:
     name: Keep results history
