@@ -2,6 +2,8 @@
 
 > **Objectif obligatoire 1**, livrable « Links and screenshots of your contributions in the communities ».
 > Exigences (novembre à mai) : **2 communautés** au moins, **5 contributions publiques**, dont **1 contribution externe**. Pour chacune : lien, date, contexte, résultat.
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## 1. Communautés visées
 

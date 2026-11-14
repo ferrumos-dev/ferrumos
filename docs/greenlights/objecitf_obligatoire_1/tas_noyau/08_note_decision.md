@@ -7,7 +7,39 @@
 > | Date | 12 novembre 2026 |
 > | Rédaction | Elias Lebrun |
 > | Statut | **proposée**, à valider en réunion d'équipe et en revue de PR (relecteurs proposés : Rayan pour la mémoire, Mathias pour le noyau) |
-> | Mesures | `06_prototype_decision.md` |
+> | Mesures | [`06_prototype_decision.md`](06_prototype_decision.md) |
+>
+> Mots techniques : le [lexique de la note](#lexique-de-la-note) ci-dessous, et le [lexique complet](lexique.md).
+
+## En bref
+
+FerrumOS gardera la solution A, une liste des zones de mémoire libres qui recolle les zones voisines quand on rend de la mémoire. Elle et sa concurrente B′ atteignent tous les objectifs chiffrés. A est retenue pour trois raisons : son cas le plus lent reste très court, elle repère une erreur de programmation courante au lieu de la laisser abîmer la mémoire, et son code est plus petit. Le prix accepté : chaque demande coûte un peu plus de temps qu’avant, et le code est à maintenir par l’équipe.
+
+## Lexique de la note
+
+| Terme | En clair |
+| --- | --- |
+| Tas | La réserve de mémoire du noyau, 100 Kio, où il prend de la place puis la rend. |
+| Allocateur | Le code qui distribue cette mémoire et récupère ce qui est rendu. |
+| Bump | L’allocateur d’origine : il n’avance que dans un sens et ne réutilise la mémoire que lorsque tout est rendu. |
+| Liste chaînée triée par adresse, fusion (A) | La liste des zones libres, dans l’ordre de la mémoire. Quand une zone rendue touche une zone libre, les deux sont recollées. |
+| Blocs de taille fixe, récupération (B, B′) | Des compartiments de tailles standard. B′ ajoute une récupération : quand la mémoire manque, les compartiments vides sont rendus et recollés. |
+| TLSF, buddy, slab | Trois autres familles d’allocateurs étudiées dans l’état de l’art ([note 05](05_etat_de_l_art.md)). |
+| Crate | Une bibliothèque Rust, ici une bibliothèque publique qu’on aurait pu utiliser à la place de notre code. |
+| En-tête par bloc | Quelques octets placés devant chaque morceau de mémoire pour l’organiser. Ils prennent de la place. |
+| Granularité de 16 o | La plus petite quantité distribuée : une demande de 8 octets en reçoit 16. |
+| p99 | La durée sous laquelle se trouvent 99 % des demandes : elle décrit les demandes lentes, pas la moyenne. |
+| Pire cas | La demande la plus lente observée. Pour un noyau, elle compte plus que la moyenne. |
+| ns, µs | Milliardième et millionième de seconde. 243 µs, c’est environ 5 000 fois plus que 50 ns. |
+| O(n), O(n²) | Le coût grandit comme le nombre d’éléments (n), ou comme son carré (n²) : deux fois plus d’éléments, quatre fois plus de temps. |
+| Verrou tenu | Pendant une demande, le tas est verrouillé : tout autre traitement qui voudrait de la mémoire attend. Un pire cas long bloque donc tout le noyau. |
+| Interruption | Un signal du matériel qui interrompt le noyau pour un court traitement. S’il attend le verrou, le système se fige. |
+| Double libération | Rendre deux fois le même morceau de mémoire, une erreur de programmation. A la refuse ; B′ ne la voit pas. |
+| Fragmentation, ‰ | La mémoire libre est éparpillée en petits morceaux. Mesurée en pour mille : 0 ‰ signifie un seul morceau libre. |
+| `unsafe` | Code que le compilateur Rust ne peut pas vérifier seul ; chaque bloc est justifié par un commentaire. |
+| Feature Cargo | Une option de compilation, qui permet de choisir l’allocateur du noyau. |
+| Changement de contexte, contention | Passer réellement d’une tâche à une autre ; la contention, c’est quand plusieurs tâches attendent le même verrou. |
+| C1 à C7, exp1 à exp6, `long_run` | Les critères de la [note 01](01_caracterisation_probleme.md) et les épreuves du [prototype de décision](06_prototype_decision.md). |
 
 ## Décision
 

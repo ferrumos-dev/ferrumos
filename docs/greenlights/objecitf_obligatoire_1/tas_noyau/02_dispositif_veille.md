@@ -3,6 +3,8 @@
 > **Objectif obligatoire 1**, livrable « Description of your research setup: sources, tools, automations, rhythm, split ».
 > Version du **12 novembre 2026** (Elias Lebrun). Le guide l'attendait décrit avant fin octobre : **retard à signaler au mentor**.
 > Statut : outillage en place et testé ; **rythme et répartition à valider en réunion d'équipe**.
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## 1. Sources suivies
 

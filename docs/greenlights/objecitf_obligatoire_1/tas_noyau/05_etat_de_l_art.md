@@ -2,6 +2,8 @@
 
 > **Objectif obligatoire 1**, livrable « State-of-the-art note with the comparison of approaches and sources cited ».
 > Rédigé le 12 novembre 2026 (Elias Lebrun). Données des crates relevées sur l'API crates.io le **12/11/2026**.
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## 1. Le problème posé aux approches
 

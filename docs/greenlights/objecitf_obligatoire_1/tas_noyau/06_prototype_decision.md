@@ -1,7 +1,16 @@
 # 06 · Prototype de décision : liste chaînée (A) contre blocs de taille fixe (B)
 
 > **Objectif obligatoire 1**, livrable « Decision prototype: code of both candidates, protocol, measurements side by side ».
-> Mesures du **12 novembre 2026** (Elias Lebrun). Critères fixés avant la mesure dans `01_caracterisation_probleme.md`.
+> Mesures du **12 novembre 2026** (Elias Lebrun). Critères fixés avant la mesure dans [la note 01](01_caracterisation_probleme.md).
+>
+> Mots techniques : voir le [lexique](lexique.md). Commandes et fichiers bruts : [annexes](#annexe-a--reproduire).
+
+## En bref
+
+- **La question.** Quelle façon d’organiser la mémoire du noyau résout le problème de la note 01 ?
+- **Les deux candidats.** A range la mémoire libre dans une liste triée et recolle les morceaux voisins. B la range dans des cases de tailles standard, comme un casier à compartiments.
+- **La méthode.** Les deux candidats, plus l’allocateur actuel comme référence, passent exactement les mêmes épreuves, dans les mêmes conditions, trois fois. Les épreuves sont jouées à deux endroits : comme un programme ordinaire sur le PC, pour mesurer les temps précisément, et dans le vrai noyau, sous QEMU.
+- **Le résultat.** Les deux candidats réutilisent la mémoire (99 → 10 000 tours). B, dans sa version d’origine, échoue dès que la taille des demandes change. Corrigé (B′), il est un peu plus rapide en moyenne, mais il peut bloquer le noyau pendant 240 à 340 µs dans un cas précis. A n’a pas ce défaut : c’est lui qui est retenu ([note 08](08_note_decision.md)).
 
 ## 1. Les deux candidats
 
@@ -12,6 +21,7 @@ Retenus à l'issue de l'état de l'art (`05_etat_de_l_art.md`) parce qu'ils sont
 | Principe | Liste des zones libres triée par adresse, premier ajustement, fusion des voisins à la libération | Classes 16, 32, … 2048 o ; un bloc libéré va en tête de la liste de sa classe ; au-delà de 2 Kio, ou si la classe est vide, repli sur A |
 | Origine | Crate `linked_list_allocator` (phil-opp), noyau Redox ; réécrite pour FerrumOS | Blog « Writing an OS in Rust », chapitre *Allocator Designs* |
 | Coût attendu | O(nombre de trous) | O(1) pour les petites tailles |
+| En image | Un parking où les places libres sont notées dans l’ordre ; deux places libres côte à côte deviennent une grande place | Un casier à compartiments de tailles fixes ; un objet rangé dans un compartiment de 64 o n’en sort que pour un objet de cette taille |
 | Code | [`libs/ferrum_alloc/src/linked_list.rs`](../../../../libs/ferrum_alloc/src/linked_list.rs) | [`libs/ferrum_alloc/src/fixed_block.rs`](../../../../libs/ferrum_alloc/src/fixed_block.rs) |
 
 Variante **B'** : B plus une **récupération** (*reclaim*) : quand le repli échoue, toutes les listes de classes sont rendues à A, qui les fusionne, puis la demande est retentée. Elle a été ajoutée **après** une première mesure qui montrait que B, tel que décrit dans le blog, ne tenait pas le critère C4 (voir §4). B et B' sont mesurés tous les deux.
@@ -21,6 +31,8 @@ Le **bump** actuel est mesuré dans les mêmes conditions comme référence « a
 Les trois allocateurs vivent dans une seule bibliothèque `no_std` sans dépendance, **la même** qui est compilée dans le noyau (`09_integration.md`) : le code mesuré est le code intégré.
 
 ## 2. Protocole
+
+Pour que la comparaison soit juste, tous les allocateurs passent les mêmes épreuves, dans les mêmes conditions. Seul l’allocateur change.
 
 ### 2.1 Deux bancs, mêmes scénarios
 
@@ -57,6 +69,8 @@ Les vérifications de correction sont celles du harnais de Rayan : alignement, a
 
 ### 3.1 Grandeurs déterministes, banc hôte (identiques aux 3 exécutions)
 
+Ce tableau compte ce qui ne varie pas d’une exécution à l’autre : nombre de tours tenus, erreurs, épuisements, blocs servis. La colonne en gras, exp2, répond directement à la question de la note 01.
+
 | Allocateur | exp1 erreurs | exp1 épuisements | 6 graines : erreurs / épuisements | **exp2 itérations** | exp2 `used` | exp3 capacité | profil : 64 o puis 1 Kio | `long_run` refus | fragmentation max |
 |---|---|---|---|---|---|---|---|---|---|
 | bump (avant) | 0 | **13** | 0 / 13 ×6 | **99** | 101 632 | 100/100/100 | 1600 puis 100 | **2 058** | 0 ‰ |
@@ -68,6 +82,8 @@ Les vérifications de correction sont celles du harnais de Rayan : alignement, a
 
 ### 3.2 Temps par opération, banc hôte (ns ; valeurs des 3 exécutions)
 
+Ce tableau donne le temps d’une demande, en milliardièmes de seconde. La dernière colonne mesure le cas le plus lent : la première grosse demande après une série de petites.
+
 | Allocateur | exp1 p50 | exp1 p99 | `long_run` p99 | **1re allocation de 1 Kio après changement de profil** |
 |---|---|---|---|---|
 | bump (avant) | 15 / 15 / 15 | 20 / 23 / 17 | 23 / 22 / 22 | 22 / 32 / 21 |
@@ -78,6 +94,8 @@ Les vérifications de correction sont celles du harnais de Rayan : alignement, a
 Le chronomètre lui-même coûte 15 à 20 ns (c'est l'essentiel du chiffre du bump). Les maxima isolés (dizaines de µs, pour tous les allocateurs y compris le bump) sont des préemptions du système hôte ; ils sont dans les fichiers bruts mais ne sont pas interprétés.
 
 ### 3.3 Banc noyau sous QEMU (3 exécutions de la suite complète par allocateur)
+
+Les mêmes épreuves, cette fois dans le vrai noyau. Les nombres de tours et de blocs doivent être identiques à ceux du banc hôte : c’est le cas. Les cycles ne sont qu’indicatifs.
 
 | Allocateur | exp1 épuisements | **exp2 itérations** | exp2 `used` | exp3 | exp6 : blocs de 1 Kio | exp6 : cycles de la 1re allocation de 1 Kio (médiane) | exp2 cycles (médiane) | rapport baseline |
 |---|---|---|---|---|---|---|---|---|
@@ -91,6 +109,8 @@ Les cycles sous QEMU sans accélération varient de 15 à 20 % : seul l'écart d
 
 ## 4. Lecture des résultats
 
+En une phrase : A et B′ résolvent tous deux le problème, et A est retenu parce que son cas le plus lent reste court et qu’il détecte une erreur de programmation que B′ laisse passer. Le détail :
+
 1. **Les deux candidats lèvent le verrou.** exp2 passe de 99 à 10 000 (C1), plus aucun épuisement artificiel (C2), aucune erreur sur 6 graines (C3), capacité intacte (C4), retour à vide (C5).
 2. **B tel que décrit dans le blog échoue au changement de profil** : la mémoire libérée en blocs de 64 o reste dans la liste de la classe 64 et ne peut plus servir une demande de 1 Kio (0 bloc au lieu de 100). C'est cette mesure qui a motivé B'.
 3. **B' est 1,7 fois plus rapide que A au p99** (≈ 29 ns contre ≈ 52 ns), mais les deux sont **20 fois sous le seuil** de C6 (1 000 ns) : le gain n'est pas nécessaire.
@@ -100,7 +120,7 @@ Les cycles sous QEMU sans accélération varient de 15 à 20 % : seul l'écart d
 
 La décision est rédigée dans `08_note_decision.md`.
 
-## 5. Reproduire
+## Annexe A · Reproduire
 
 ```sh
 # Banc hôte (Rust stable)
@@ -114,7 +134,7 @@ cd libs/ferrum_alloc && cargo test
 bash scripts/kernel_tests/run.sh -- --no-default-features --features heap-fixed-block
 ```
 
-## 6. Fichiers bruts
+## Annexe B · Fichiers bruts
 
 | Contenu | Fichier |
 |---|---|

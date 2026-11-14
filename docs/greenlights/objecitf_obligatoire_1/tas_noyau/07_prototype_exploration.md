@@ -2,6 +2,8 @@
 
 > **Objectif obligatoire 1**, livrable « Exploration prototype: code, hypothesis stated beforehand, result including a negative one ».
 > Pas de décision attachée : il s'agit de tester une piste que l'équipe ne maîtrise pas.
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## 1. Pourquoi cette piste
 

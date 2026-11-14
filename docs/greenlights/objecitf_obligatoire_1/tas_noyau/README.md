@@ -5,6 +5,8 @@
 > **Problème difficile retenu : le tas du noyau ne réutilise pas la mémoire libérée** (expérience 2 : 99 itérations sur 10 000 avec l'allocateur bump).
 >
 > État au **12 novembre 2026**. Dossier commité sur la branche `obj1/heap-allocator`, **pas encore relu ni fusionné** par l'équipe.
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## Résultat en une ligne
 
@@ -36,12 +38,29 @@ Allocateur à liste chaînée avec fusion, intégré au noyau : **exp2 passe de 
 5. **Relire et fusionner la PR** (relecteur ≠ auteur), puis reporter le lien de PR, le hash de merge et le lien du run CI dans `09_integration.md`.
 6. **Publier les contributions** préparées dans `10_communautes.md` depuis vos comptes et en archiver liens et captures.
 
+## Retours de relecture du 15 novembre 2026
+
+Chaque retour a été confronté au guide Tech 4 avant d’être appliqué. Simplifier le vocabulaire est possible partout ; retirer une mesure ou une preuve exigée par le guide ne l’est pas, car « an objective with no evidence counts as not validated ».
+
+| Document | Retour | Suite donnée |
+|---|---|---|
+| Tous | Lexique des mots-clés techniques | ✅ [Lexique commun](lexique.md), lié depuis chaque document |
+| 01 | Moins technique, à visée large, parler du projet et pas du code, garder les tableaux et les critères | ✅ Résumé « En bref », énoncé et contraintes reformulés au niveau du projet, critères expliqués « en clair ». Seuils et mesures inchangés |
+| 01 | Prendre un problème plus large en exemple (« faire fonctionner les couches entre elles efficacement ») | ⏸️ **À décider en équipe.** Le guide demande **un** problème difficile précis, mesuré avec l’approche simple et doté de critères chiffrés, sur lequel portent ensuite état de l’art, prototypes et intégration. Un sujet aussi large ne se mesure pas. Une version plus large peut exister à côté, comme modèle, sans remplacer cette note |
+| 02, 03, 05 | RAS | — (02 : rythme et répartition restent à valider en équipe) |
+| 04 | À voir en groupe | ⏸️ Rituel attendu dès novembre : 1re présentation avant fin novembre |
+| 06 | Explication trop technique | ✅ Résumé « En bref », comparaison en image des candidats, lecture de chaque tableau en une phrase, commandes et fichiers bruts en annexe. Protocole et mesures côte à côte conservés |
+| 07 | Ajouter un second prototype d’exploration et comparer dans un tableau | ⏸️ **À décider en équipe.** Le guide demande un prototype d’exploration, déjà fourni (TLSF, comparé à A et B′ au §4). Un second est possible avant avril, à condition d’écrire et dater son hypothèse **avant** la mesure. Pistes : `talc`, buddy |
+| 08 | Ajouter du lexique | ✅ Résumé « En bref » et lexique propre à la note |
+| 09 | Vulgariser « Ce qui a été intégré » | ✅ Résumé en clair ; le tableau fichier par fichier, preuve de l’intégration, passe en annexe |
+
 ## Arborescence
 
 ```
 docs/greenlights/objecitf_obligatoire_1/tas_noyau/
 ├── README.md                       ← ce fichier
 ├── 01 … 10 *.md                    ← les livrables
+├── lexique.md                      ← les mots techniques expliqués simplement
 ├── experiences/                    ← comptes rendus des expériences 1 à 5 (mesures « avant »), captures et journaux
 └── results/
     ├── host/                       ← banc hôte : 3 exécutions (.md + .json)

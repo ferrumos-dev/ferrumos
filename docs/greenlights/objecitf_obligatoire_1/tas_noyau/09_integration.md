@@ -2,22 +2,21 @@
 
 > **Objectif obligatoire 1**, livrables « Proof of integration: commit or merge, demonstration, tests » et « Before and after measurements on the success criteria ».
 > Intégration réalisée le 12 novembre 2026 (Elias Lebrun). Commitée dans `18fd351` sur la branche `obj1/heap-allocator`, **pas encore fusionnée** : la preuve « commit / merge » sera le lien de la PR une fois relue (voir §6).
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## 1. Ce qui a été intégré
 
-| Fichier | Changement |
-|---|---|
-| `libs/ferrum_alloc/` | **nouveau** : bibliothèque `no_std` sans dépendance : bump, liste chaînée (A), blocs fixes (B/B'), statistiques communes, 9 tests unitaires |
-| `POC/ferrum_Poc_adaptative_sheduller/Cargo.toml` | dépendance `ferrum_alloc` ; features `heap-linked-list` (**défaut**), `heap-fixed-block`, `heap-bump` ; image `experiment_6` |
-| `POC/.../src/allocator.rs` | l'allocateur global devient `Locked<KernelHeap>` ; l'API publique (`stats`, `try_alloc`, `free`, `HEAP_START`, `HEAP_SIZE`) est inchangée, `HeapStats` gagne `live_bytes`, `largest_free_block`, `rejected_frees`, `fragmentation_permille()` |
-| `POC/.../src/experiments.rs` | exp1 publie `exhaustions=` dans son RECORD ; **nouvelle expérience 6** (changement de profil) |
-| `POC/.../src/testing.rs` | `Record::report_with` pour des champs supplémentaires |
-| `POC/.../src/lib.rs` | chaque image affiche l'allocateur compilé (`heap allocator: linked_list`) |
-| `POC/.../tests/experiment_6.rs` | image dédiée à l'expérience 6 |
-| `POC/.../tests/baseline.json` | **seuils relevés aux critères de réussite** (voir §3) |
-| `scripts/kernel_tests/test_results.py` | les exécutions de référence deviennent celles de la liste chaînée ; nouveau test : les journaux bump d'octobre sont désormais **rejetés** par la baseline (12/12 tests ✅) |
-| `.github/workflows/kernel-tests.yml` | déclenché aussi par `libs/ferrum_alloc/**` et `research/heap-allocator/**` ; nouveau job qui lance les tests unitaires et le banc |
-| `POC/.../test_environment.md` | allocateur et version de QEMU mis à jour |
+En clair, l’intégration a consisté à :
+
+- **Remplacer la façon dont le noyau gère sa réserve de mémoire.** L’ancien allocateur, qui ne réutilisait jamais la mémoire rendue, laisse la place à la liste chaînée choisie dans la [note 08](08_note_decision.md). Le reste du noyau n’a rien eu à changer : il demande et rend la mémoire exactement comme avant.
+- **Partager un seul code entre les mesures et le noyau.** Les allocateurs vivent dans une petite bibliothèque, `ferrum_alloc`, utilisée à la fois par le banc de mesure et par le noyau. Ce qui a été mesuré est donc exactement ce qui tourne.
+- **Garder l’ancien comportement rejouable.** Une option de compilation permet de reconstruire le noyau d’octobre, pour refaire la mesure « avant » quand on veut.
+- **Rendre la mémoire observable.** Le noyau sait maintenant dire combien de mémoire il utilise réellement et à quel point elle est émiettée (critère C7).
+- **Ajouter une épreuve.** L’expérience 6 vérifie que la mémoire rendue en petits morceaux peut resservir pour de gros morceaux.
+- **Empêcher un retour en arrière.** Les vérifications automatiques échouent désormais si quelqu’un remet un allocateur qui ne tient pas les critères. Rejouer l’ancien allocateur les fait échouer sur 3 règles (§4).
+
+Le détail fichier par fichier, preuve de ce qui a changé dans le code, est en [annexe](#annexe--détail-des-fichiers-modifiés). Les mots techniques sont expliqués dans le [lexique](lexique.md).
 
 ## 2. Ce que l'intégration remplace et rend possible
 
@@ -98,3 +97,19 @@ Une capture d'écran de la démonstration reste à ajouter dans `results/` le jo
 - **Tas fixe de 100 Kio** : la réutilisation est résolue, la taille ne l'est pas. Une demande unique de plus de 100 Kio échoue toujours.
 - **Échec d'allocation toujours fatal sur le chemin standard** (`Box`, `Vec`) : l'allocateur renvoie un pointeur nul, Rust appelle le gestionnaire d'erreur d'allocation, le noyau panique. Il arrive simplement beaucoup plus tard.
 - **Les mesures noyau ont été faites avec QEMU 10.2.1**, pas 11.1.0 comme en octobre : les grandeurs déterministes sont identiques, les cycles ne sont pas comparables entre les deux.
+
+## Annexe · Détail des fichiers modifiés
+
+| Fichier | Changement |
+|---|---|
+| `libs/ferrum_alloc/` | **nouveau** : bibliothèque `no_std` sans dépendance : bump, liste chaînée (A), blocs fixes (B/B'), statistiques communes, 9 tests unitaires |
+| `POC/ferrum_Poc_adaptative_sheduller/Cargo.toml` | dépendance `ferrum_alloc` ; features `heap-linked-list` (**défaut**), `heap-fixed-block`, `heap-bump` ; image `experiment_6` |
+| `POC/.../src/allocator.rs` | l'allocateur global devient `Locked<KernelHeap>` ; l'API publique (`stats`, `try_alloc`, `free`, `HEAP_START`, `HEAP_SIZE`) est inchangée, `HeapStats` gagne `live_bytes`, `largest_free_block`, `rejected_frees`, `fragmentation_permille()` |
+| `POC/.../src/experiments.rs` | exp1 publie `exhaustions=` dans son RECORD ; **nouvelle expérience 6** (changement de profil) |
+| `POC/.../src/testing.rs` | `Record::report_with` pour des champs supplémentaires |
+| `POC/.../src/lib.rs` | chaque image affiche l'allocateur compilé (`heap allocator: linked_list`) |
+| `POC/.../tests/experiment_6.rs` | image dédiée à l'expérience 6 |
+| `POC/.../tests/baseline.json` | **seuils relevés aux critères de réussite** (voir §3) |
+| `scripts/kernel_tests/test_results.py` | les exécutions de référence deviennent celles de la liste chaînée ; nouveau test : les journaux bump d'octobre sont désormais **rejetés** par la baseline (12/12 tests ✅) |
+| `.github/workflows/kernel-tests.yml` | déclenché aussi par `libs/ferrum_alloc/**` et `research/heap-allocator/**` ; nouveau job qui lance les tests unitaires et le banc |
+| `POC/.../test_environment.md` | allocateur et version de QEMU mis à jour |

@@ -2,6 +2,8 @@
 
 > **Objectif obligatoire 1**, livrable « Complete research log ». Alimenté d'octobre à mai, **20 entrées minimum**, réparties dans le temps.
 > Règle : une entrée sans conclusion ne compte pas. « Rien à faire, parce que… » est une conclusion.
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## Compteur
 

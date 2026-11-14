@@ -2,6 +2,8 @@
 
 > **Objectif obligatoire 1**, livrable « Records of the internal presentations ».
 > Exigences : rituel en place **dès novembre**, au moins mensuel ; **6 présentations** enregistrées sur l'année ; **3 éléments** de la veille réellement utilisés dans le projet.
+>
+> Mots techniques : voir le [lexique](lexique.md).
 
 ## 1. Rituel
 
