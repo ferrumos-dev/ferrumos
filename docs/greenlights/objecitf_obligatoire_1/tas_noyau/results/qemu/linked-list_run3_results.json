@@ -5,7 +5,7 @@
   "run": {
     "date": "2026-11-12T16:06:23+00:00",
     "commit": "c88bde460d54345626f98877d553bb520564fdf2",
-    "branch": "claude/student-guide-tech-deliverables-99fb46",
+    "branch": "obj1/heap-allocator",
     "source": "local"
   },
   "environment": {

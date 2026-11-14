@@ -1,7 +1,7 @@
 # 09 · Intégration et mesures avant / après
 
 > **Objectif obligatoire 1**, livrables « Proof of integration: commit or merge, demonstration, tests » et « Before and after measurements on the success criteria ».
-> Intégration réalisée le 12 novembre 2026 (Elias Lebrun). **Pas encore commitée** : la preuve « commit / merge » sera le lien de la PR une fois relue (voir §6).
+> Intégration réalisée le 12 novembre 2026 (Elias Lebrun). Commitée dans `18fd351` sur la branche `obj1/heap-allocator`, **pas encore fusionnée** : la preuve « commit / merge » sera le lien de la PR une fois relue (voir §6).
 
 ## 1. Ce qui a été intégré
 

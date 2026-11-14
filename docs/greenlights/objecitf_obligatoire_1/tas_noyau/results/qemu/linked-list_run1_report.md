@@ -1,5 +1,7 @@
 ## Tests noyau QEMU — `c88bde4`
 
+> Révision : arbre de travail non commité au-dessus de `c88bde4`, commité ensuite dans `18fd351` (le titre et `results.json` indiquent `c88bde4`). Cible : images de test x86_64 du PoC d’ordonnancement sous QEMU 10.2.1, allocateur `heap-linked-list`. Date : 2026-11-12. Environnement : [`test_environment.md`](../../../../../../POC/ferrum_Poc_adaptative_sheduller/test_environment.md).
+
 | Image de test | Statut | Tests |
 |---|---|---|
 | `lib` | ✅ passed | 9/9 |

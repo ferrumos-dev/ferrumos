@@ -4,7 +4,7 @@
 >
 > **Problème difficile retenu : le tas du noyau ne réutilise pas la mémoire libérée** (expérience 2 : 99 itérations sur 10 000 avec l'allocateur bump).
 >
-> État au **12 novembre 2026**. Rien de ce dossier n'est encore commité ni relu par l'équipe.
+> État au **12 novembre 2026**. Dossier commité sur la branche `obj1/heap-allocator`, **pas encore relu ni fusionné** par l'équipe.
 
 ## Résultat en une ligne
 
@@ -42,6 +42,7 @@ Allocateur à liste chaînée avec fusion, intégré au noyau : **exp2 passe de 
 docs/greenlights/objecitf_obligatoire_1/tas_noyau/
 ├── README.md                       ← ce fichier
 ├── 01 … 10 *.md                    ← les livrables
+├── experiences/                    ← comptes rendus des expériences 1 à 5 (mesures « avant »), captures et journaux
 └── results/
     ├── host/                       ← banc hôte : 3 exécutions (.md + .json)
     └── qemu/                       ← suite QEMU : 3 exécutions × 3 allocateurs (journal, results.json, rapport baseline)
@@ -49,3 +50,5 @@ libs/ferrum_alloc/                  ← bibliothèque intégrée au noyau (bump,
 research/heap-allocator/bench/      ← banc du prototype de décision + exploration TLSF
 scripts/veille/                     ← veille automatique
 ```
+
+[Retour à l’objectif obligatoire 1](../README.md) · [Index Greenlight](../../README.md)

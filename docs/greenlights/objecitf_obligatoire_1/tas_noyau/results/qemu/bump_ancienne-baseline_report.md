@@ -1,5 +1,7 @@
 ## Tests noyau QEMU — `c88bde4`
 
+> Révision : commit `c88bde4`, sans modification (bump d’origine, ancienne baseline). Cible : images de test x86_64 du PoC d’ordonnancement sous QEMU 10.2.1, allocateur `heap-bump`. Date : 2026-11-12. Environnement : [`test_environment.md`](../../../../../../POC/ferrum_Poc_adaptative_sheduller/test_environment.md).
+
 | Image de test | Statut | Tests |
 |---|---|---|
 | `lib` | ✅ passed | 9/9 |

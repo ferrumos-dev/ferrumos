@@ -122,4 +122,4 @@ bash scripts/kernel_tests/run.sh -- --no-default-features --features heap-fixed-
 | Suite QEMU, 3 × 3 exécutions (journal série, résultats, rapport baseline) | `results/qemu/{bump,fixed-block,linked-list}_run{1,2,3}_*` |
 | Reproduction du bump avec l'ancienne baseline (avant toute modification) | `results/qemu/bump_ancienne-baseline_*` |
 
-Les exécutions du 12/11 ont été faites sur l'arbre de travail non commité, au-dessus du commit `c88bde4` (`results.json` indique ce commit).
+Les exécutions du 12/11 ont été faites sur l'arbre de travail non commité, au-dessus du commit `c88bde4` (`results.json` indique ce commit). Ces changements ont ensuite été commités dans `18fd351` ; chaque rapport QEMU l'indique avec la cible et la date. Le champ `branch` des `results.json` donne la branche où le travail a été commité (`obj1/heap-allocator`).
