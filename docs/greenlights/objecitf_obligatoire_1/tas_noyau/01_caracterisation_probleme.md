@@ -4,7 +4,7 @@
 >
 > | | |
 > |---|---|
-> | Problème identifié et mesuré | **17 octobre 2026** (Rayan Benhabiles, `docs/memoire/COMPTE_RENDU_EXPERIENCES_1_ET_2.md`) |
+> | Problème identifié et mesuré | **17 octobre 2026** (Rayan Benhabiles, `docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/compte_rendu_experiences_1_2.md`) |
 > | Mesures complétées | 19 octobre 2026 (expériences 3 à 5) |
 > | Note formalisée | **12 novembre 2026** (Elias Lebrun), avant toute mesure des solutions candidates |
 > | Validation mentor | **à obtenir** au prochain suivi (le guide l'attend avant fin octobre : retard à assumer devant le mentor) |
@@ -67,6 +67,6 @@ Fixés le 12 novembre 2026, **avant** toute mesure des solutions candidates. Ils
 
 ## Sources
 
-- `docs/memoire/COMPTE_RENDU_EXPERIENCES_1_ET_2.md` et `..._3_4_ET_5.md` (Rayan Benhabiles, 17 et 19 octobre 2026)
-- `docs/memoire/logs/` (sorties brutes), `POC/ferrum_Poc_adaptative_sheduller/TEST_ENVIRONMENT.md`
-- Reproduction du 12 novembre 2026 : `docs/objectif1/results/qemu/bump_2026-11-12.log`
+- `docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/compte_rendu_experiences_1_2.md` et `..._3_4_ET_5.md` (Rayan Benhabiles, 17 et 19 octobre 2026)
+- `docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/logs/` (sorties brutes), `POC/ferrum_Poc_adaptative_sheduller/test_environment.md`
+- Reproduction du 12 novembre 2026 : `docs/greenlights/objecitf_obligatoire_1/tas_noyau/results/qemu/bump_2026-11-12.log`

@@ -38,7 +38,7 @@ Il faut répondre oui à la première avant d'avoir le droit d'optimiser la seco
 ## 2. Environnement de mesure
 
 Les mesures ne sont comparables que dans cet environnement exact. Il est figé
-dans `POC/ferrum_Poc_adaptative_sheduller/TEST_ENVIRONMENT.md`.
+dans `POC/ferrum_Poc_adaptative_sheduller/test_environment.md`.
 
 | Élément | Valeur |
 |---|---|

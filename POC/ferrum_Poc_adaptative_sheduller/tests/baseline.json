@@ -1,6 +1,6 @@
 {
-  "description": "Valeurs de référence des tests noyau. Une mesure qui sort de sa règle fait échouer la CI. Mettre à jour ce fichier dans la même PR qu'une amélioration voulue. Seules les valeurs déterministes ont une règle : les cycles varient jusqu'à 20 % sous QEMU. Seuils relevés le 12/11/2026 avec l'intégration de l'allocateur à liste chaînée (objectif 1, critères C1 à C5 de docs/objectif1/01_caracterisation_probleme.md).",
-  "source": "docs/memoire/logs/ (bump, 17 et 19 octobre 2026) puis docs/objectif1/results/qemu/ (liste chaînée, 3 exécutions identiques, 12 novembre 2026)",
+  "description": "Valeurs de référence des tests noyau. Une mesure qui sort de sa règle fait échouer la CI. Mettre à jour ce fichier dans la même PR qu'une amélioration voulue. Seules les valeurs déterministes ont une règle : les cycles varient jusqu'à 20 % sous QEMU. Seuils relevés le 12/11/2026 avec l'intégration de l'allocateur à liste chaînée (objectif 1, critères C1 à C5 de docs/greenlights/objecitf_obligatoire_1/tas_noyau/01_caracterisation_probleme.md).",
+  "source": "docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/logs/ (bump, 17 et 19 octobre 2026) puis docs/greenlights/objecitf_obligatoire_1/tas_noyau/results/qemu/ (liste chaînée, 3 exécutions identiques, 12 novembre 2026)",
   "expected_suites": [
     "lib",
     "experiment_1",

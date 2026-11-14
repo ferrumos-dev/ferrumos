@@ -66,7 +66,7 @@ Les deux candidats prototypés sont donc **A, la liste chaînée**, et **B, les 
 
 **Sources internes**
 
-- `docs/memoire/COMPTE_RENDU_EXPERIENCES_1_ET_2.md` et `..._3_4_ET_5.md` (Rayan, octobre 2026) : protocole et limites qui ont servi de grille.
+- `docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/compte_rendu_experiences_1_2.md` et `..._3_4_ET_5.md` (Rayan, octobre 2026) : protocole et limites qui ont servi de grille.
 - `docs/greenlights/Objectif obligatoire 2/` (Mathias, novembre 2026) : comparaison Redox / Asterinas / Theseus / Tock / Hubris côté architecture.
 
 > Limite de cette note : les publications sont citées d'après leur contenu connu de l'équipe, pas relues intégralement pour ce document. Seules les lignes « mesuré » viennent de nos exécutions.

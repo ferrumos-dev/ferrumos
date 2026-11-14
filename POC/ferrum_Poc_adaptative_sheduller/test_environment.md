@@ -69,7 +69,7 @@ runs `cargo test --no-fail-fast`, saves the log and a `results.json` in
 `kernel-test-results/`, and checks every `RECORD` against
 `tests/baseline.json`. The same script runs in CI on every change
 (`.github/workflows/kernel-tests.yml`); runs on `main` are kept in the
-`test-results` branch. Details: `docs/tests/AUTOMATISATION_TESTS_QEMU.md`.
+`test-results` branch. Details: `docs/greenlights/objecitf_obligatoire_2/md/automatisation_tests_qemu.md`.
 
 When an optimisation improves a measurement on purpose, raise its rule in
 `tests/baseline.json` in the same pull request.
@@ -129,4 +129,4 @@ cargo test --no-default-features --features heap-bump
 ```
 
 Expected with the November baseline: 3 rule violations (exp1 exhaustions,
-exp2 iterations and used bytes). See docs/objectif1/09_integration.md.
+exp2 iterations and used bytes). See docs/greenlights/objecitf_obligatoire_1/tas_noyau/09_integration.md.

@@ -1,7 +1,7 @@
 name: Kernel tests (QEMU)
 
 # Boots every kernel test image under QEMU, keeps the results and compares
-# them with the baseline. See docs/tests/AUTOMATISATION_TESTS_QEMU.md.
+# them with the baseline. See docs/greenlights/objecitf_obligatoire_2/md/automatisation_tests_qemu.md.
 
 on:
   push:
@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 env:
-  # Pinned: newer versions do not build this kernel, see TEST_ENVIRONMENT.md
+  # Pinned: newer versions do not build this kernel, see test_environment.md
   RUST_TOOLCHAIN: nightly-2026-01-15
   BOOTIMAGE_VERSION: 0.10.3
   POC_DIR: POC/ferrum_Poc_adaptative_sheduller
@@ -50,7 +50,7 @@ jobs:
         run: cargo test
       - name: Decision prototype benchmark (research/heap-allocator/bench)
         working-directory: research/heap-allocator/bench
-        # Deterministic columns must match docs/objectif1/06_prototype_decision.md;
+        # Deterministic columns must match docs/greenlights/objecitf_obligatoire_1/tas_noyau/06_prototype_decision.md;
         # timings depend on the runner and are only indicative.
         run: cargo run --release -- --output bench.json | tee -a "$GITHUB_STEP_SUMMARY"
 

@@ -17,7 +17,7 @@
 | `POC/.../tests/baseline.json` | **seuils relevés aux critères de réussite** (voir §3) |
 | `scripts/kernel_tests/test_results.py` | les exécutions de référence deviennent celles de la liste chaînée ; nouveau test : les journaux bump d'octobre sont désormais **rejetés** par la baseline (12/12 tests ✅) |
 | `.github/workflows/kernel-tests.yml` | déclenché aussi par `libs/ferrum_alloc/**` et `research/heap-allocator/**` ; nouveau job qui lance les tests unitaires et le banc |
-| `POC/.../TEST_ENVIRONMENT.md` | allocateur et version de QEMU mis à jour |
+| `POC/.../test_environment.md` | allocateur et version de QEMU mis à jour |
 
 ## 2. Ce que l'intégration remplace et rend possible
 

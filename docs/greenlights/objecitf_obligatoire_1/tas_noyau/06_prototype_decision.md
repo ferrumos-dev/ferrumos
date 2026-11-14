@@ -12,11 +12,11 @@ Retenus à l'issue de l'état de l'art (`05_etat_de_l_art.md`) parce qu'ils sont
 | Principe | Liste des zones libres triée par adresse, premier ajustement, fusion des voisins à la libération | Classes 16, 32, … 2048 o ; un bloc libéré va en tête de la liste de sa classe ; au-delà de 2 Kio, ou si la classe est vide, repli sur A |
 | Origine | Crate `linked_list_allocator` (phil-opp), noyau Redox ; réécrite pour FerrumOS | Blog « Writing an OS in Rust », chapitre *Allocator Designs* |
 | Coût attendu | O(nombre de trous) | O(1) pour les petites tailles |
-| Code | [`libs/ferrum_alloc/src/linked_list.rs`](../../libs/ferrum_alloc/src/linked_list.rs) | [`libs/ferrum_alloc/src/fixed_block.rs`](../../libs/ferrum_alloc/src/fixed_block.rs) |
+| Code | [`libs/ferrum_alloc/src/linked_list.rs`](../../../../libs/ferrum_alloc/src/linked_list.rs) | [`libs/ferrum_alloc/src/fixed_block.rs`](../../../../libs/ferrum_alloc/src/fixed_block.rs) |
 
 Variante **B'** : B plus une **récupération** (*reclaim*) : quand le repli échoue, toutes les listes de classes sont rendues à A, qui les fusionne, puis la demande est retentée. Elle a été ajoutée **après** une première mesure qui montrait que B, tel que décrit dans le blog, ne tenait pas le critère C4 (voir §4). B et B' sont mesurés tous les deux.
 
-Le **bump** actuel est mesuré dans les mêmes conditions comme référence « avant » ([`bump.rs`](../../libs/ferrum_alloc/src/bump.rs), algorithme identique à celui d'octobre).
+Le **bump** actuel est mesuré dans les mêmes conditions comme référence « avant » ([`bump.rs`](../../../../libs/ferrum_alloc/src/bump.rs), algorithme identique à celui d'octobre).
 
 Les trois allocateurs vivent dans une seule bibliothèque `no_std` sans dépendance, **la même** qui est compilée dans le noyau (`09_integration.md`) : le code mesuré est le code intégré.
 
@@ -110,7 +110,7 @@ cargo run --release -- --output bench.json
 # Tests unitaires de la bibliothèque
 cd libs/ferrum_alloc && cargo test
 
-# Banc noyau, un allocateur (environnement : TEST_ENVIRONMENT.md)
+# Banc noyau, un allocateur (environnement : test_environment.md)
 bash scripts/kernel_tests/run.sh -- --no-default-features --features heap-fixed-block
 ```
 

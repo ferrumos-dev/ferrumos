@@ -42,7 +42,7 @@ Branche alimentée automatiquement par la CI (`.github/workflows/kernel-tests.ym
 - `history.csv` : une ligne par mesure et par exécution, pour suivre l'évolution
 - `latest.json` : dernier run, sert de point de comparaison au run suivant
 
-Voir `docs/tests/AUTOMATISATION_TESTS_QEMU.md` sur la branche principale.
+Voir `docs/greenlights/objecitf_obligatoire_2/md/automatisation_tests_qemu.md` sur la branche principale.
 EOF
 fi
 

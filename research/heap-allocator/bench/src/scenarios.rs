@@ -1,10 +1,10 @@
-//! The scenarios of the protocol (docs/objectif1/06_prototype_decision.md).
+//! The scenarios of the protocol (docs/greenlights/objecitf_obligatoire_1/tas_noyau/06_prototype_decision.md).
 //!
 //! exp1, exp2 and exp3 are line-by-line ports of
 //! POC/ferrum_Poc_adaptative_sheduller/src/experiments.rs (same seed, same
 //! sizes, same checks), so that their deterministic results can be compared
 //! with the QEMU runs. `phase_change` and `long_run` are new: they cover the
-//! limits listed in docs/memoire/COMPTE_RENDU_EXPERIENCES_1_ET_2.md §5.
+//! limits listed in docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/compte_rendu_experiences_1_2.md §5.
 
 use crate::heaps::BenchHeap;
 use core::alloc::Layout;

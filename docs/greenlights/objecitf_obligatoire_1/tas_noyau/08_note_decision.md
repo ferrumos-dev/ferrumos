@@ -43,7 +43,7 @@ Les deux candidats atteignent tous les seuils fixés à l'avance. La décision s
 | **B' · blocs fixes + récupération** | Passe tous les critères, mais pire cas de 243–343 µs (O(n²)) verrou tenu, pas de détection de double libération, environ 70 % de code en plus. Pourrait revenir si un futur profil de charge rend le p99 critique *et* si la récupération est rendue linéaire (tri fusion de la liste avant fusion). |
 | **TLSF** (exploration, `07_prototype_exploration.md`) | Aucun gain mesurable sur A au p99 (48–49 ns contre 51–54 ns), et un en-tête par bloc qui coûte 4 % de capacité sur des blocs de 1 Kio et 33 % sur des blocs de 64 o. |
 | **Buddy, slab** (état de l'art seulement) | Non prototypés. Buddy : arrondi aux puissances de deux (une demande de 520 o en consomme 1 024). Slab : suppose des caches d'objets typés que le noyau n'a pas encore. Voir `05_etat_de_l_art.md`. |
-| **Utiliser une crate** (`linked_list_allocator`, `talc`) | Ajoute une dépendance à un noyau qui épingle déjà ses versions (`TEST_ENVIRONMENT.md`). Notre implémentation est petite, testée, et porte les statistiques dont nous avons besoin (C7). À réévaluer si elle devient un poids : `talc` est la piste suivie en veille. |
+| **Utiliser une crate** (`linked_list_allocator`, `talc`) | Ajoute une dépendance à un noyau qui épingle déjà ses versions (`test_environment.md`). Notre implémentation est petite, testée, et porte les statistiques dont nous avons besoin (C7). À réévaluer si elle devient un poids : `talc` est la piste suivie en veille. |
 
 ## Conséquences acceptées
 

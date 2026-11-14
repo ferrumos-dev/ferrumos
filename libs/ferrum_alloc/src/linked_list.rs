@@ -10,7 +10,7 @@
 //! respect the invariant and no byte is ever lost to rounding.
 //!
 //! Costs: allocation and free walk the list, O(number of holes). Coalescing
-//! keeps that number low; the measurements are in docs/objectif1/.
+//! keeps that number low; the measurements are in docs/greenlights/objecitf_obligatoire_1/tas_noyau/.
 
 use crate::{align_up, Heap, HeapStats};
 use core::alloc::Layout;

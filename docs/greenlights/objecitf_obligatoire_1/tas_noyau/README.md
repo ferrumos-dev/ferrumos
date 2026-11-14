@@ -15,11 +15,11 @@ Allocateur à liste chaînée avec fusion, intégré au noyau : **exp2 passe de 
 | # | Livrable demandé | Échéance du guide | Document | État |
 |---|---|---|---|---|
 | 1 | Note de caractérisation datée d'octobre, avec critères de réussite | fin octobre | [01_caracterisation_probleme.md](01_caracterisation_probleme.md) | ✅ rédigée ; problème mesuré le 17/10, note du 12/11 (**en retard**), **validation mentor à obtenir** |
-| 2 | Description du dispositif de veille : sources, outils, automatisations, rythme, répartition | fin octobre | [02_dispositif_veille.md](02_dispositif_veille.md) + [`scripts/veille/`](../../scripts/veille/) + [`veille.yml`](../../.github/workflows/veille.yml) | ✅ outillage testé ; ⚠️ rythme et répartition **à valider en équipe** ; webhook Discord à configurer |
+| 2 | Description du dispositif de veille : sources, outils, automatisations, rythme, répartition | fin octobre | [02_dispositif_veille.md](02_dispositif_veille.md) + [`scripts/veille/`](../../../../scripts/veille/) + [`veille.yml`](../../../../.github/workflows/veille.yml) | ✅ outillage testé ; ⚠️ rythme et répartition **à valider en équipe** ; webhook Discord à configurer |
 | 3 | Journal de veille complet | octobre → mai, ≥ 20 entrées | [03_journal_veille.md](03_journal_veille.md) | 🟡 11 / 20 ; à alimenter chaque semaine |
 | 4 | Comptes rendus des présentations internes | dès novembre, 6 sur l'année | [04_presentations_internes.md](04_presentations_internes.md) | 🔴 0 / 6 ; rituel et planning définis, 1re présentation à faire en novembre ; 5 éléments réutilisés listés (3 exigés) |
 | 5 | Note d'état de l'art, comparaison d'au moins 3 approches, sources citées | fin décembre | [05_etat_de_l_art.md](05_etat_de_l_art.md) | ✅ 7 approches, 4 comparées par la mesure |
-| 6 | Code et protocole des 2 prototypes, avec les mesures | décision : fin janvier ; exploration : février–avril | [06_prototype_decision.md](06_prototype_decision.md), [07_prototype_exploration.md](07_prototype_exploration.md) ; code : [`libs/ferrum_alloc/`](../../libs/ferrum_alloc/), [`research/heap-allocator/bench/`](../../research/heap-allocator/bench/) | ✅ mesures sur l'hôte et sous QEMU, 3 exécutions chacune |
+| 6 | Code et protocole des 2 prototypes, avec les mesures | décision : fin janvier ; exploration : février–avril | [06_prototype_decision.md](06_prototype_decision.md), [07_prototype_exploration.md](07_prototype_exploration.md) ; code : [`libs/ferrum_alloc/`](../../../../libs/ferrum_alloc/), [`research/heap-allocator/bench/`](../../../../research/heap-allocator/bench/) | ✅ mesures sur l'hôte et sous QEMU, 3 exécutions chacune |
 | 7 | Note de décision technique | fin février | [08_note_decision.md](08_note_decision.md) | ✅ proposée ; **à valider en équipe** |
 | 8 | Preuve d'intégration : commit ou merge, démonstration, tests | fin avril | [09_integration.md](09_integration.md) | 🟡 intégré et testé (QEMU + unitaires) ; **manque : PR relue et fusionnée, run CI vert, capture de la démo** |
 | 9 | Mesures avant / après sur les critères | fin avril | [09_integration.md §3](09_integration.md) | ✅ |
@@ -39,7 +39,7 @@ Allocateur à liste chaînée avec fusion, intégré au noyau : **exp2 passe de 
 ## Arborescence
 
 ```
-docs/objectif1/
+docs/greenlights/objecitf_obligatoire_1/tas_noyau/
 ├── README.md                       ← ce fichier
 ├── 01 … 10 *.md                    ← les livrables
 └── results/

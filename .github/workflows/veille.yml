@@ -3,7 +3,7 @@ name: Veille
 # Objective 1 research watch: every Monday, list what changed in the sources
 # of scripts/veille/sources.json and publish the digest (run summary, issue,
 # and the team Discord channel if the DISCORD_WEBHOOK_VEILLE secret is set).
-# See docs/objectif1/02_dispositif_veille.md.
+# See docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md.
 
 on:
   schedule:

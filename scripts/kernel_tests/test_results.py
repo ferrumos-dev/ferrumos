@@ -91,9 +91,9 @@ class ParseLogTest(unittest.TestCase):
         self.assertEqual(len(records), 3)
 
     def test_committed_measurement_logs(self):
-        # Rayan's logs (docs/memoire/logs) only kept the kernel lines; every
+        # Rayan's logs (docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/logs) only kept the kernel lines; every
         # RECORD must still be read with all its fields.
-        for log in sorted((ROOT / "docs/memoire/logs").glob("*.log")):
+        for log in sorted((ROOT / "docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/logs").glob("*.log")):
             text = log.read_text(encoding="utf-8")
             wrapped = "     Running tests/all.rs (x)\n" + text
             _, records = results.parse_log(wrapped)
@@ -123,7 +123,7 @@ class CompareTest(unittest.TestCase):
         # Every committed reference run of the current allocator must pass the
         # baseline. Since 12/11/2026 (objective 1) the reference runs are the
         # linked-list ones; the October bump logs are checked below.
-        logs = sorted((ROOT / "docs/objectif1/results/qemu").glob("linked-list_run*.log"))
+        logs = sorted((ROOT / "docs/greenlights/objecitf_obligatoire_1/tas_noyau/results/qemu").glob("linked-list_run*.log"))
         self.assertTrue(logs)
         for log in logs:
             _, records = results.parse_log(log.read_text(encoding="utf-8"))
@@ -138,7 +138,7 @@ class CompareTest(unittest.TestCase):
 
     def test_october_bump_runs_are_now_rejected(self):
         # Going back to the bump allocator must fail the raised baseline.
-        log = ROOT / "docs/memoire/logs/exp1-exp2-runs.log"
+        log = ROOT / "docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/logs/exp1-exp2-runs.log"
         _, records = results.parse_log("     Running tests/all.rs (x)\n" + log.read_text(encoding="utf-8"))
         run = {"status": "passed", "suites": [], "records": records}
         problems, _ = results.compare(run, dict(self.baseline, expected_suites=[]))

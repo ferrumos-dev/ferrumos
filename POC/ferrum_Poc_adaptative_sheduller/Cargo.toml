@@ -25,7 +25,7 @@ ferrum_alloc = { path = "../../libs/ferrum_alloc" }
 
 [features]
 # One heap-* feature only. The default comes from the objective 1 decision
-# (docs/objectif1/08_note_decision.md). To replay the "before" measurements:
+# (docs/greenlights/objecitf_obligatoire_1/tas_noyau/08_note_decision.md). To replay the "before" measurements:
 #   cargo test --no-default-features --features heap-bump
 default = ["heap-linked-list"]
 heap-linked-list = []

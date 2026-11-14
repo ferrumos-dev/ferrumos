@@ -44,7 +44,7 @@ Exigence : au moins 3. Chaque ligne renvoie à une entrée du journal (`03_journ
 | # | Élément | Source d'origine | Ce que ça a changé | Où le voir |
 |---|---|---|---|---|
 | 1 | Framework de test `no_std` sous QEMU (`isa-debug-exit`, sortie série) | blog phil-opp, *Testing* (entrée 1) | Les expériences mémoire sont des tests automatiques au lieu d'observations à l'écran | `POC/ferrum_Poc_adaptative_sheduller/src/testing.rs` |
-| 2 | Toolchain et `bootimage` épinglés | notes de version `bootimage`, `x86_64` (entrée 2) | Le build ne casse plus quand une nightly sort | `rust-toolchain.toml`, `TEST_ENVIRONMENT.md` |
+| 2 | Toolchain et `bootimage` épinglés | notes de version `bootimage`, `x86_64` (entrée 2) | Le build ne casse plus quand une nightly sort | `rust-toolchain.toml`, `test_environment.md` |
 | 3 | Design des blocs de taille fixe | blog phil-opp, *Allocator Designs* (entrée 6) | Candidat B du prototype de décision ; sa limite mesurée a mené à B' puis à la décision | `libs/ferrum_alloc/src/fixed_block.rs` |
 | 4 | Comparaison des OS Rust | docs Redox, Asterinas, Theseus, Tock, Hubris (entrée 5) | Architecture monolithique modulaire retenue | `docs/greenlights/Objectif obligatoire 2/` (branche `main`) |
 | 5 | Épinglage de la toolchain en CI | actions `dtolnay/rust-toolchain`, `Swatinem/rust-cache` (entrée 4) | Tests QEMU automatiques à chaque push | `.github/workflows/kernel-tests.yml` |

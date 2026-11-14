@@ -14,7 +14,7 @@
 //!   class lists is handed back to the fallback, which merges them, and the
 //!   request is retried once. Without this, memory freed as small blocks can
 //!   never serve a larger request ("phase change" scenario, see
-//!   docs/objectif1/). The reclaim can be switched off to measure its effect.
+//!   docs/greenlights/objecitf_obligatoire_1/tas_noyau/). The reclaim can be switched off to measure its effect.
 
 use crate::linked_list::{LinkedListHeap, GRANULE};
 use crate::{Heap, HeapStats};

@@ -36,7 +36,7 @@ au run précédent, et **échoue si quelque chose s'est dégradé**.
 
 ### En local
 
-Prérequis : l'environnement de `POC/ferrum_Poc_adaptative_sheduller/TEST_ENVIRONMENT.md`
+Prérequis : l'environnement de `POC/ferrum_Poc_adaptative_sheduller/test_environment.md`
 (Rust `nightly-2026-01-15`, `bootimage` 0.10.3, QEMU) et Python 3.
 
 ```sh

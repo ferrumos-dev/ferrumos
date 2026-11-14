@@ -23,8 +23,8 @@ Thumbs.db
 # Logs
 *.log
 # Comptes rendus generes localement
-docs/memoire/*.pdf
-docs/memoire/*.html
+docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/*.pdf
+docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/*.html
 
 # Resultats locaux des tests noyau (scripts/kernel_tests/run.sh)
 kernel-test-results/
@@ -33,7 +33,8 @@ kernel-test-results/
 __pycache__/
 
 # Preuves de l'objectif 1 : journaux QEMU conservés volontairement
-!docs/objectif1/results/**/*.log
+!docs/greenlights/objecitf_obligatoire_1/tas_noyau/results/**/*.log
+!docs/greenlights/objecitf_obligatoire_1/tas_noyau/experiences/logs/*.log
 
 # Veille locale (scripts/veille/check_sources.py)
 veille-state.json

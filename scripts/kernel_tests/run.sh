@@ -30,7 +30,7 @@ done
 
 for tool in cargo bootimage qemu-system-x86_64 python3; do
     if ! command -v "$tool" >/dev/null; then
-        echo "missing tool: $tool (see POC/ferrum_Poc_adaptative_sheduller/TEST_ENVIRONMENT.md)" >&2
+        echo "missing tool: $tool (see POC/ferrum_Poc_adaptative_sheduller/test_environment.md)" >&2
         exit 2
     fi
 done

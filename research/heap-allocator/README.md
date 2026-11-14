@@ -1,7 +1,7 @@
 # Heap allocator research (objective 1)
 
 Decision prototype and exploration prototype for the FerrumOS kernel heap.
-Documents and results: [`docs/objectif1/`](../../docs/objectif1/README.md).
+Documents and results: [`docs/greenlights/objecitf_obligatoire_1/tas_noyau/`](../../docs/greenlights/objecitf_obligatoire_1/tas_noyau/README.md).
 
 | Path | Content |
 |---|---|

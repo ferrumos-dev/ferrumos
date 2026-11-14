@@ -5,7 +5,7 @@
 //!
 //!   cargo run --release -- [--output results.json]
 //!
-//! Protocol: docs/objectif1/06_prototype_decision.md
+//! Protocol: docs/greenlights/objecitf_obligatoire_1/tas_noyau/06_prototype_decision.md
 
 // The scenarios are line-by-line ports of the kernel experiments: keep their
 // arithmetic as written there rather than following newer clippy idioms.

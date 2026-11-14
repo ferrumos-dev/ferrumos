@@ -1,5 +1,5 @@
 {
-  "description": "Sources suivies automatiquement pour la veille de l'objectif 1 (docs/objectif1/02_dispositif_veille.md). Chaque source a un responsable : c'est lui qui lit l'entrée du digest et décide s'il faut une entrée dans le journal de veille.",
+  "description": "Sources suivies automatiquement pour la veille de l'objectif 1 (docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md). Chaque source a un responsable : c'est lui qui lit l'entrée du digest et décide s'il faut une entrée dans le journal de veille.",
   "sources": [
     {"id": "crate:linked_list_allocator", "type": "crate", "name": "linked_list_allocator", "area": "allocateurs", "owner": "Rayan", "why": "Allocateur à liste chaînée de référence (Redox, blog phil-opp) : comparaison directe avec notre candidat A."},
     {"id": "crate:talc", "type": "crate", "name": "talc", "area": "allocateurs", "owner": "Rayan", "why": "Allocateur no_std utilisé par le noyau Hermit ; alternative mature si notre implémentation atteint ses limites."},

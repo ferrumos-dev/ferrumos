@@ -11,7 +11,7 @@
 //! | [`FixedBlockHeap`]     | candidate B: size classes 16..2048 B over a linked-list fallback |
 //!
 //! None of them take a lock: the kernel wraps the chosen one in a spin mutex.
-//! See docs/objectif1/ for the protocol, the measurements and the decision.
+//! See docs/greenlights/objecitf_obligatoire_1/tas_noyau/ for the protocol, the measurements and the decision.
 #![cfg_attr(not(test), no_std)]
 
 mod bump;

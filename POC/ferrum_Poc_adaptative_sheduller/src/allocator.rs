@@ -12,7 +12,7 @@
 //!
 //!   cargo test --no-default-features --features heap-bump
 //!
-//! See docs/objectif1/08_note_decision.md for the measurements behind the default.
+//! See docs/greenlights/objecitf_obligatoire_1/tas_noyau/08_note_decision.md for the measurements behind the default.
 
 use core::alloc::{GlobalAlloc, Layout};
 use core::ptr;

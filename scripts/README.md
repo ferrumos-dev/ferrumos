@@ -13,7 +13,7 @@ Utility scripts for the FerrumOS project.
 | `veille/check_sources.py` | Research watch (objective 1): checks the sources of `veille/sources.json` (crates.io, GitHub, RSS) and writes a digest of what changed, grouped by owner; run weekly by `.github/workflows/veille.yml` |
 | `veille/sources.json` | The followed sources, with owner and reason |
 
-See [`docs/tests/AUTOMATISATION_TESTS_QEMU.md`](../docs/tests/AUTOMATISATION_TESTS_QEMU.md) and [`docs/objectif1/02_dispositif_veille.md`](../docs/objectif1/02_dispositif_veille.md).
+See [`docs/greenlights/objecitf_obligatoire_2/md/automatisation_tests_qemu.md`](../docs/greenlights/objecitf_obligatoire_2/md/automatisation_tests_qemu.md) and [`docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md`](../docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md).
 
 ## Usage
 

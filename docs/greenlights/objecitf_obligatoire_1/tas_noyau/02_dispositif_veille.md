@@ -6,7 +6,7 @@
 
 ## 1. Sources suivies
 
-Liste outillée : [`scripts/veille/sources.json`](../../scripts/veille/sources.json) (vérifiée automatiquement chaque semaine). Chaque source a une raison d'être et un responsable.
+Liste outillée : [`scripts/veille/sources.json`](../../../../scripts/veille/sources.json) (vérifiée automatiquement chaque semaine). Chaque source a une raison d'être et un responsable.
 
 | Source | Type | Ce qu'elle apporte | Pourquoi on la garde | Resp. |
 |---|---|---|---|---|
@@ -38,8 +38,8 @@ Sources **suivies à la main** (pas de flux exploitable) :
 
 | Outil | Ce qu'il fait | Démonstration |
 |---|---|---|
-| [`scripts/veille/check_sources.py`](../../scripts/veille/check_sources.py) | interroge crates.io, l'API GitHub et les flux RSS/Atom, compare à l'état précédent, écrit un **digest Markdown groupé par responsable** ; bibliothèque standard Python seulement | `python3 scripts/veille/check_sources.py --state veille-state.json --digest digest.md` ; testé le 12/11/2026 : 15 sources jointes, détection des nouveautés vérifiée en vieillissant l'état de 3 sources (`bootloader v0.11.17`, *This Week in Rust 676*, `talc 5.0.2` remontés) |
-| [`.github/workflows/veille.yml`](../../.github/workflows/veille.yml) | **chaque lundi 6 h UTC** : lance le script, publie le digest dans le résumé du run, **ouvre une issue « Veille du … »** s'il y a du nouveau, garde l'état en cache | onglet Actions → *Veille* → *Run workflow* (après merge) |
+| [`scripts/veille/check_sources.py`](../../../../scripts/veille/check_sources.py) | interroge crates.io, l'API GitHub et les flux RSS/Atom, compare à l'état précédent, écrit un **digest Markdown groupé par responsable** ; bibliothèque standard Python seulement | `python3 scripts/veille/check_sources.py --state veille-state.json --digest digest.md` ; testé le 12/11/2026 : 15 sources jointes, détection des nouveautés vérifiée en vieillissant l'état de 3 sources (`bootloader v0.11.17`, *This Week in Rust 676*, `talc 5.0.2` remontés) |
+| [`.github/workflows/veille.yml`](../../../../.github/workflows/veille.yml) | **chaque lundi 6 h UTC** : lance le script, publie le digest dans le résumé du run, **ouvre une issue « Veille du … »** s'il y a du nouveau, garde l'état en cache | onglet Actions → *Veille* → *Run workflow* (après merge) |
 | Salon Discord automatique | si le secret `DISCORD_WEBHOOK_VEILLE` est défini, le digest est aussi posté sur un salon `#veille` de l'équipe | à configurer : Paramètres du salon → Intégrations → Webhook, puis secret du dépôt |
 | Journal partagé | [`03_journal_veille.md`](03_journal_veille.md) dans le dépôt : versionné, relu en PR | historique Git |
 

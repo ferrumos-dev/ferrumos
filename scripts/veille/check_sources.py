@@ -151,7 +151,7 @@ def digest(news, errors, sources_count, first_run_ids):
         lines += ["", "## Sources injoignables", ""]
         lines += [f"- {source['id']} : {error}" for source, error in errors]
     lines += ["", "Rappel : chaque nouveauté lue donne une entrée dans "
-              "docs/objectif1/03_journal_veille.md, avec une conclusion (même « rien à faire »)."]
+              "docs/greenlights/objecitf_obligatoire_1/tas_noyau/03_journal_veille.md, avec une conclusion (même « rien à faire »)."]
     return "\n".join(lines) + "\n"
 
 

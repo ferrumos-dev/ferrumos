@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pinned (see POC/ferrum_Poc_adaptative_sheduller/TEST_ENVIRONMENT.md):
+      # Pinned (see POC/ferrum_Poc_adaptative_sheduller/test_environment.md):
       # newer nightlies break x86_64 0.14 and bootimage > 0.10.3 passes
       # -Zjson-target-spec, unknown to this toolchain.
       - name: Install Rust nightly-2026-01-15
