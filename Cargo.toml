@@ -13,6 +13,8 @@ exclude = [
     "POC/ferrumos_PoC",
     "POC/ferrum_Poc_adaptative_sheduller",
     "POC/ferrum_Poc_graphic",
+    "libs/ferrum_alloc",
+    "research/heap-allocator/bench",
 ]
 
 [lints.rust]

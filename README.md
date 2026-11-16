@@ -79,8 +79,7 @@ The project currently has **3 independent Proofs of Concept** and a compilable p
 ├── libs/         Shared no_std crates (ferrum_alloc: kernel heap allocators)
 ├── POC/          Independent reference, scheduler and graphics prototypes
 ├── research/     Host benchmarks and experiments (heap allocator)
-├── scripts/      Repository utilities: kernel tests under QEMU, research watch
-└── targets/      Shared target specifications
+└── scripts/      Repository utilities: kernel tests under QEMU, research watch
 ```
 
 ---
@@ -254,7 +253,7 @@ See [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) for the full task breakdown
 - [`docs/presentations/FerrumOS_Presentations_Summary.md`](./docs/presentations/FerrumOS_Presentations_Summary.md) — Presentation summaries
 - [`docs/eip/enonce_suivi1.txt`](./docs/eip/enonce_suivi1.txt) — EIP (student project) brief
 - [`docs/eip/repartitions.txt`](./docs/eip/repartitions.txt) — Initial task allocation
-- [`targets/x86_64-ferrumos.json`](./targets/x86_64-ferrumos.json) — Canonical bare-metal target specification
+- Bare-metal targets: the root project builds for the built-in `x86_64-unknown-none` target; each PoC keeps its own `x86_64-ferrumos.json` specification
 - Individual PoC READMEs in `POC/` — Build/run instructions per PoC
 
 ---
