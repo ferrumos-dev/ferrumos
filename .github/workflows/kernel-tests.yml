@@ -10,6 +10,9 @@ on:
       - "libs/ferrum_alloc/**"
       - "research/heap-allocator/**"
       - "scripts/kernel_tests/**"
+      - "Cargo.toml"
+      - "rust-toolchain.toml"
+      - "POC/rust-toolchain.toml"
       - ".github/workflows/kernel-tests.yml"
   pull_request:
     paths:
@@ -17,6 +20,9 @@ on:
       - "libs/ferrum_alloc/**"
       - "research/heap-allocator/**"
       - "scripts/kernel_tests/**"
+      - "Cargo.toml"
+      - "rust-toolchain.toml"
+      - "POC/rust-toolchain.toml"
       - ".github/workflows/kernel-tests.yml"
   workflow_dispatch:
 
@@ -50,6 +56,10 @@ jobs:
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt, clippy
+      - name: Select the pinned toolchain for all Cargo commands
+        run: |
+          echo "RUSTUP_TOOLCHAIN=$RUST_TOOLCHAIN" >> "$GITHUB_ENV"
+          rustc +"$RUST_TOOLCHAIN" --version --verbose
       # Blocking checks (normes_rust.md): no `|| true`, exit codes propagate.
       # ferrum_alloc denies undocumented unsafe blocks, so Clippy also checks
       # that every unsafe block has its SAFETY comment.
@@ -87,6 +97,10 @@ jobs:
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rust-src, llvm-tools-preview
+      - name: Select the pinned toolchain for all Cargo commands
+        run: |
+          echo "RUSTUP_TOOLCHAIN=$RUST_TOOLCHAIN" >> "$GITHUB_ENV"
+          rustc +"$RUST_TOOLCHAIN" --version --verbose
 
       - uses: Swatinem/rust-cache@v2
         with:

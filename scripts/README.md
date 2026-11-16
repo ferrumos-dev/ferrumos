@@ -6,6 +6,8 @@ Utility scripts for the FerrumOS project.
 
 | Script | Purpose |
 |--------|---------|
+| `boot.py` | Build, launch or test the integrated root kernel BIOS image; Python 3.11+, outputs under `target/boot/` |
+| `test_boot.py` | Host self-tests for the root image builder orchestration and QEMU test client |
 | `kernel_tests/run.sh` | Run the kernel tests under QEMU, save the results and compare them with the baseline (local and CI) |
 | `kernel_tests/results.py` | Parse `cargo test` output into JSON, compare with the baseline, append to the CSV history |
 | `kernel_tests/store_history.sh` | CI only: commit each run's results to the `test-results` branch |
@@ -16,6 +18,22 @@ Utility scripts for the FerrumOS project.
 See [`docs/greenlights/objecitf_obligatoire_2/md/automatisation_tests_qemu.md`](../docs/greenlights/objecitf_obligatoire_2/md/automatisation_tests_qemu.md) and [`docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md`](../docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md).
 
 ## Usage
+
+The root kernel has its own build and boot commands. They do not launch a PoC:
+
+```sh
+python scripts/boot.py build
+python scripts/boot.py run
+python scripts/boot.py test --timeout 30
+python -m unittest discover -s scripts -p test_boot.py -v
+```
+
+Use `python3` where required by the host. See the [boot guide](../docs/boot.md)
+for pinned toolchains, QEMU discovery, keyboard controls and diagnostic files.
+`run` and `test` rebuild the image before launching it. The test injects PS/2
+keyboard events through QMP and checks serial acknowledgement and framebuffer output.
+
+The historical scheduler/heap PoC tests and research watch keep their own commands:
 
 ```sh
 # From repository root

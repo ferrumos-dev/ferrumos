@@ -7,6 +7,9 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
+      - "tools/image-builder/**"
+      - "scripts/boot.py"
+      - "scripts/test_boot.py"
       - ".github/workflows/kernel.yml"
   pull_request:
     paths:
@@ -14,6 +17,9 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
+      - "tools/image-builder/**"
+      - "scripts/boot.py"
+      - "scripts/test_boot.py"
       - ".github/workflows/kernel.yml"
   workflow_dispatch:
 
@@ -26,24 +32,58 @@ env:
 
 jobs:
   ferrumos:
-    name: Build, format and lint
+    name: Build, quality and BIOS boot
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Select the pinned toolchain and install its components
-        run: rustup show active-toolchain
+        run: |
+          rustup show active-toolchain
+          rustc --version --verbose
+      - name: Install image-builder toolchain
+        working-directory: tools/image-builder
+        run: |
+          rustup show active-toolchain
+          rustc --version --verbose
+      - name: Install QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch locked kernel dependencies
+        run: cargo fetch --locked
       - name: Check formatting
-        run: cargo fmt --all -- --check
+        run: |
+          cargo fmt --all -- --check
+          cargo fmt --manifest-path tools/image-builder/Cargo.toml -- --check
       - name: Check all host targets
         run: cargo check --workspace --all-targets --locked --offline
       - name: Lint host targets
         run: cargo clippy --workspace --all-targets --locked --offline -- -D warnings
       - name: Build host library
         run: cargo build --workspace --lib --locked --offline
+      - name: Test portable drivers and boot orchestration
+        run: |
+          cargo test --workspace --lib --locked --offline
+          python -m unittest discover -s scripts -p test_boot.py -v
       - name: Build bare-metal library
         run: cargo build --workspace --lib --target x86_64-unknown-none --locked --offline
       - name: Lint bare-metal library
-        run: cargo clippy --workspace --lib --target x86_64-unknown-none --locked --offline -- -D warnings
+        run: cargo clippy --workspace --lib --bin ferrumos --features baremetal --target x86_64-unknown-none --locked --offline -- -D warnings
       - name: Check documentation
         run: cargo doc --workspace --no-deps --locked --offline
+      - name: Build image and test boot, framebuffer and keyboard under QEMU
+        run: python scripts/boot.py test --timeout 30
+      - name: Lint image builder
+        working-directory: tools/image-builder
+        run: cargo clippy --locked --target-dir ../../target/image-builder -- -D warnings
+      - name: Preserve boot diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ferrumos-boot-${{ github.sha }}
+          path: target/boot/
+          if-no-files-found: error

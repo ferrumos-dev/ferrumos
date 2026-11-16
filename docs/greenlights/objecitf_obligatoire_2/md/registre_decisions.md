@@ -22,6 +22,17 @@ Consigner une décision au moment de sa validation. Pour chaque entrée, garder 
 - Preuves. [Mesures](../../objecitf_obligatoire_1/tas_noyau/06_prototype_decision.md) et [intégration](../../objecitf_obligatoire_1/tas_noyau/09_integration.md). Lien de PR, révision fusionnée et exécution CI à renseigner après revue.
 - Réexamen. p99 de `long_run` au-dessus de 500 ns, fragmentation au-dessus de 500 ‰, ou contention révélée par un vrai changement de contexte.
 
+### ADR-003 · Démarrage BIOS et pilotes du projet commun
+
+- 2026-11-16 · Proposée, implémentée sur la branche de travail et à relire en équipe.
+- Contexte. Le projet commun sous `src/` doit produire sa propre image et fournir affichage et saisie, avec des modules réutilisables pour le shell et le noyau.
+- Options examinées. Reprendre la chaîne `bootloader 0.9`/VGA des PoC, ou utiliser `bootloader 0.11.15` avec son ABI framebuffer. Les critères sont la séparation des responsabilités, la maîtrise des versions et la possibilité de tester les pilotes sur l'hôte puis dans l'image réelle.
+- Choix implémenté. `bootloader_api 0.11.15` dans le noyau compilé avec Rust `1.94.0`, et `bootloader 0.11.15` dans un constructeur d'image hôte isolé, épinglé sur `nightly-2026-03-07`. Le framebuffer et les événements clavier sont exposés par les pilotes ; une ligne UTF-8 de capacité fixe prépare leur utilisation par le shell.
+- Conséquences. Deux chaînes Rust à préparer, interface de boot à maintenir avec des versions identiques, clavier PS/2 scruté sur un seul CPU avec les interruptions désactivées. Le test couvre BIOS/QEMU ; ni l'UEFI ni le matériel réel ne sont validés. La scrutation occupe le CPU jusqu'à l'intégration des IRQ.
+- Fichiers. `src/main.rs`, `src/boot/`, `src/arch/x86_64/`, `src/drivers/`, `tools/image-builder/`, `scripts/boot.py` et `.github/workflows/kernel.yml`.
+- Preuves. Tests hôte des pilotes et de la ligne ; `python scripts/boot.py test --timeout 30` sur l'image intégrée, avec marqueurs série, saisie/correction PS/2 et capture framebuffer non uniforme. Joindre le `summary.json`, les journaux et la révision de la PR. [Protocole et limites](../../../boot.md#contrôles-et-preuves).
+- Réexamen. Intégration du timer/IRQ et de l'ordonnanceur, besoin de plusieurs CPU, nouveau protocole de boot ou exigences dépassant la console initiale.
+
 ## Modèle d’entrée
 
 ```markdown
