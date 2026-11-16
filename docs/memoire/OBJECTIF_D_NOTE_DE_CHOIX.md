@@ -147,7 +147,10 @@ qui rendent une mesure comparable à une autre :
 
 Reproductibilité : `cargo test` construit et démarre sept images, une pour les
 neuf tests de capacité du harnais et une par expérience. Une seule expérience
-se relance par `cargo test --test experiment_2`.
+se relance par `cargo test --test experiment_2`. La procédure complète destinée
+à une personne qui n'a jamais lancé ces tests est écrite dans
+`docs/memoire/PROTOCOLE_DE_MESURE.md`, et le protocole a été rejoué par un tiers
+le 12 novembre 2026, voir la section 7.
 
 ---
 
@@ -269,8 +272,35 @@ stable, et le bruit de I3 est quantifié.
 
 Attention au vocabulaire : cette passe est un contrôle de stabilité, réalisé
 par la même personne sur la même machine. Elle ne vaut pas preuve de
-reproductibilité, qui exige qu'un tiers rejoue le protocole. Ce point reste
-ouvert.
+reproductibilité, qui exige qu'un tiers rejoue le protocole.
+
+### Reproductibilité par un tiers, le 12 novembre 2026
+
+Le protocole a été rejoué par **Elias Lebrun**, sur un autre système et avec une
+autre version de QEMU, au commit `c88bde4`. Résultats publiés dans
+`docs/objectif1/results/qemu/`, branche `obj1/heap-allocator`.
+
+| | Mesure d'origine | Rejeu par un tiers |
+|---|---|---|
+| Date | 17 et 19 octobre 2026 | 12 novembre 2026 |
+| Opérateur | Rayan Benhabiles | Elias Lebrun |
+| Système | Windows 11 | Debian ou Ubuntu |
+| QEMU | 11.1.0 | **10.2.1** |
+| I1 dérivé, itérations avant refus | 99 | **99** |
+| Expérience 2, `used_after` | 101 632 octets | **101 632 octets** |
+| I2, blocs vivants | 100 | **100** |
+| Erreurs de corruption, cadres perdus | 0 | 0 |
+
+C'est une preuve de reproductibilité plus forte que prévu : les grandeurs
+déterministes sont identiques à l'octet près malgré un système différent et une
+version de QEMU différente. Le protocole ne dépend donc ni de la machine ni de
+la version de l'émulateur, uniquement de la toolchain épinglée et de la
+configuration du noyau.
+
+Ce qui reste à compléter sur cette pièce : le relevé formel autour de la mesure,
+c'est à dire le temps nécessaire jusqu'au premier résultat, les points de
+blocage rencontrés et les corrections apportées à la documentation. Le
+formulaire de `docs/memoire/PROTOCOLE_DE_MESURE.md` sert à cela.
 
 Note sur l'automatisation : le pipeline se fonde sur I1 et I2 pour accepter ou
 refuser un changement, jamais sur I3, qui ne produit qu'un avertissement. Une
