@@ -12,6 +12,8 @@ env:
 
 jobs:
   build-reference-poc:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Build Reference PoC
     runs-on: ubuntu-latest
     steps:
@@ -33,6 +35,8 @@ jobs:
           path: POC/ferrumos_PoC/target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
 
   build-scheduler-poc:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Build Scheduler PoC
     runs-on: ubuntu-latest
     steps:
@@ -59,6 +63,8 @@ jobs:
           path: POC/ferrum_Poc_adaptative_sheduller/target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
 
   build-graphics-poc:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Build Graphics PoC
     runs-on: ubuntu-latest
     steps:
@@ -80,6 +86,8 @@ jobs:
           path: POC/ferrum_Poc_graphic/target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
 
   lint:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Lint
     runs-on: ubuntu-latest
     steps:

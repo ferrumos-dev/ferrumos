@@ -16,6 +16,8 @@ permissions:
 
 jobs:
   digest:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

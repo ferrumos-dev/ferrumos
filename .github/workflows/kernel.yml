@@ -32,6 +32,8 @@ env:
 
 jobs:
   ferrumos:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Build, quality and BIOS boot
     runs-on: ubuntu-latest
     timeout-minutes: 20

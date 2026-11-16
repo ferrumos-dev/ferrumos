@@ -1,0 +1,143 @@
+name: Sync to Epitech
+
+# This repo is the dev repo. The Epitech repo is a read-only copy of it:
+# every branch and tag pushed here is force-pushed there once the CI that ran
+# on that commit (kernel.yml, kernel-tests.yml) has succeeded, and
+# deleted branches and tags are deleted there too.
+#
+# Nobody pushes to the Epitech repo directly: anything pushed there is
+# overwritten by the next sync.
+#
+# Secrets (one of the two):
+#   EPITECH_SSH_KEY  private half of a deploy key with write access on the Epitech repo
+#   EPITECH_TOKEN    token of an account with push access on the Epitech repo
+#                    (classic PAT with the `repo` scope)
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["**"]
+  delete:
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  EPITECH_REPO: EpitechPGE3-2025/G-EIP-601-ALL-6-1-eip-81
+  # CI that must pass before a commit reaches the Epitech repo. veille.yml is
+  # not a check of the code. ci.yml only builds the old PoCs, two of which do
+  # not compile on main yet: add it back here once they are fixed.
+  GATED_WORKFLOWS: >-
+    .github/workflows/kernel.yml
+    .github/workflows/kernel-tests.yml
+  RESULTS_BRANCH: test-results
+
+# A newer push to the same ref replaces a sync that is still waiting for CI.
+concurrency:
+  group: >-
+    sync-epitech-${{ github.event_name != 'delete' && github.ref
+    || format('refs/{0}/{1}', github.event.ref_type == 'tag' && 'tags' || 'heads', github.event.ref) }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Push to the Epitech repo
+    if: github.repository_owner != 'EpitechPGE3-2025'
+    runs-on: ubuntu-latest
+    # kernel-tests.yml can take up to an hour under QEMU.
+    timeout-minutes: 90
+    steps:
+      - name: Work out what to sync
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          DELETED_REF: ${{ github.event.ref }}
+          DELETED_TYPE: ${{ github.event.ref_type }}
+        run: |
+          if [ "$EVENT" = delete ]; then
+            if [ "$DELETED_TYPE" = tag ]; then ref="refs/tags/$DELETED_REF"; else ref="refs/heads/$DELETED_REF"; fi
+            echo "ref=$ref" >> "$GITHUB_OUTPUT"
+            echo "delete=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$GITHUB_REF" >> "$GITHUB_OUTPUT"
+            echo "delete=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for the CI of this commit
+        if: steps.target.outputs.delete == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          # Leave the other workflows time to be registered for this commit.
+          sleep 60
+          filter='[.workflow_runs[]
+                   | select(.event == "push" and (.path as $p | $gated | index($p)))]
+                  | group_by(.path) | map(max_by(.run_number))'
+          gated=$(printf '%s\n' $GATED_WORKFLOWS | jq -R . | jq -sc .)
+          while :; do
+            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" \
+                     | jq -c --argjson gated "$gated" "$filter")
+            echo "$runs" | jq -r '.[] | "\(.path): \(.status) \(.conclusion // "")"'
+            if [ "$(echo "$runs" | jq 'map(select(.status != "completed")) | length')" -eq 0 ]; then
+              break
+            fi
+            sleep 30
+          done
+          failed=$(echo "$runs" | jq -r '.[] | select(.conclusion | IN("success", "skipped", "neutral") | not) | .path')
+          if [ -n "$failed" ]; then
+            echo "::error::CI did not pass on $SHA, nothing is pushed to Epitech:"
+            echo "$failed"
+            exit 1
+          fi
+          if [ "$(echo "$runs" | jq length)" -eq 0 ]; then
+            echo "No gated workflow ran on this commit (paths or branch filters)."
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure the Epitech remote
+        env:
+          SSH_KEY: ${{ secrets.EPITECH_SSH_KEY }}
+          TOKEN: ${{ secrets.EPITECH_TOKEN }}
+        run: |
+          if [ -n "$SSH_KEY" ]; then
+            install -d -m 700 ~/.ssh
+            printf '%s\n' "$SSH_KEY" > ~/.ssh/epitech
+            chmod 600 ~/.ssh/epitech
+            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+            export GIT_SSH_COMMAND="ssh -i ~/.ssh/epitech -o IdentitiesOnly=yes"
+            echo "GIT_SSH_COMMAND=$GIT_SSH_COMMAND" >> "$GITHUB_ENV"
+            git remote add epitech "git@github.com:$EPITECH_REPO.git"
+          elif [ -n "$TOKEN" ]; then
+            git remote add epitech "https://x-access-token:$TOKEN@github.com/$EPITECH_REPO.git"
+          else
+            echo "::error::Set the EPITECH_SSH_KEY or EPITECH_TOKEN secret."
+            exit 1
+          fi
+
+      - name: Push to the Epitech repo
+        env:
+          REF: ${{ steps.target.outputs.ref }}
+          DELETE: ${{ steps.target.outputs.delete }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ "$DELETE" = true ]; then
+            git push epitech ":$REF" || echo "$REF was already absent on Epitech."
+            exit 0
+          fi
+          case "$REF" in
+            # Push the tag itself so annotated tags keep their message.
+            refs/tags/*) git push --force epitech "$REF:$REF" ;;
+            # Push the exact commit the CI checked.
+            *) git push --force epitech "$SHA:$REF" ;;
+          esac
+          # kernel-tests.yml commits to the results branch with GITHUB_TOKEN,
+          # which never starts another workflow: carry it along with main.
+          if [ "$REF" = refs/heads/main ] && git fetch origin "$RESULTS_BRANCH" 2>/dev/null; then
+            git push --force epitech "FETCH_HEAD:refs/heads/$RESULTS_BRANCH"
+          fi
