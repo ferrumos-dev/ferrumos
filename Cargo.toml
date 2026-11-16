@@ -1,0 +1,29 @@
+[package]
+name = "ferrumos"
+description = "Modular Rust operating system for x86_64"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.94"
+authors = ["FerrumOS Team"]
+publish = false
+
+[workspace]
+resolver = "2"
+exclude = [
+    "POC/ferrumos_PoC",
+    "POC/ferrum_Poc_adaptative_sheduller",
+    "POC/ferrum_Poc_graphic",
+]
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+undocumented_unsafe_blocks = "deny"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"

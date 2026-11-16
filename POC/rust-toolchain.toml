@@ -1,0 +1,5 @@
+# Keep the independent prototypes on nightly when the root selects stable Rust.
+[toolchain]
+channel = "nightly"
+profile = "minimal"
+components = ["rust-src", "llvm-tools-preview", "rustfmt", "clippy"]

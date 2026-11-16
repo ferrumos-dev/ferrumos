@@ -1,0 +1,49 @@
+name: FerrumOS
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/kernel.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/kernel.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTDOCFLAGS: "-D warnings"
+
+jobs:
+  ferrumos:
+    name: Build, format and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select the pinned toolchain and install its components
+        run: rustup show active-toolchain
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Check all host targets
+        run: cargo check --workspace --all-targets --locked --offline
+      - name: Lint host targets
+        run: cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+      - name: Build host library
+        run: cargo build --workspace --lib --locked --offline
+      - name: Build bare-metal library
+        run: cargo build --workspace --lib --target x86_64-unknown-none --locked --offline
+      - name: Lint bare-metal library
+        run: cargo clippy --workspace --lib --target x86_64-unknown-none --locked --offline -- -D warnings
+      - name: Check documentation
+        run: cargo doc --workspace --no-deps --locked --offline
