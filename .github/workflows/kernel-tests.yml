@@ -36,6 +36,8 @@ env:
 
 jobs:
   results-tool:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Results tool self-tests
     runs-on: ubuntu-latest
     steps:
@@ -46,6 +48,8 @@ jobs:
       - run: python3 -m unittest discover -s scripts/kernel_tests -v
 
   heap-allocator:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Heap allocator format, Clippy, unit tests and benchmark
     runs-on: ubuntu-latest
     steps:
@@ -81,6 +85,8 @@ jobs:
         run: cargo run --release --locked -- --output bench.json | tee -a "$GITHUB_STEP_SUMMARY"
 
   qemu-tests:
+    # Runs only in the dev repo, not in the Epitech copy (see sync-epitech.yml).
+    if: github.repository_owner != 'EpitechPGE3-2025'
     name: Kernel tests under QEMU
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -146,7 +152,7 @@ jobs:
   store-results:
     name: Keep results history
     needs: qemu-tests
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.qemu-tests.result != 'cancelled'
+    if: github.repository_owner != 'EpitechPGE3-2025' && (always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.qemu-tests.result != 'cancelled')
     runs-on: ubuntu-latest
     permissions:
       contents: write
