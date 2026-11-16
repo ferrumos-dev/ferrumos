@@ -6,3 +6,10 @@ date,commit,branch,status,record,iterations,errors,used_before,used_after,cycles
 2026-11-16T20:20:48+00:00,901ced4,main,passed,exp4_page_cycle,500,0,0,0,134067856
 2026-11-16T20:20:48+00:00,901ced4,main,passed,exp5_under_interrupts,10200,0,0,0,834343430
 2026-11-16T20:20:48+00:00,901ced4,main,passed,exp6_phase_change,100,0,0,0,109914
+2026-11-16T20:48:08+00:00,187d5ac,main,passed,box_alloc_64B,1,0,0,64,183089
+2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp1_alloc_free_sequence,10000,0,0,0,830573986
+2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp2_long_lived_vs_churn,10000,0,0,256,140611380
+2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp3_exhaustion_and_recovery,3,0,0,0,258594879
+2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp4_page_cycle,500,0,0,0,186805420
+2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp5_under_interrupts,10200,0,0,0,1076733644
+2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp6_phase_change,100,0,0,0,129458

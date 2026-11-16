@@ -3,8 +3,8 @@
   "status": "passed",
   "cargo_exit_code": 0,
   "run": {
-    "date": "2026-11-16T20:20:48+00:00",
-    "commit": "901ced4af4b55fdfd04c407d1a4477bbdd47c985",
+    "date": "2026-11-16T20:48:08+00:00",
+    "commit": "187d5acfd171623d23d765d3520903d8e8b30956",
     "branch": "main",
     "source": "ci"
   },
@@ -12,7 +12,7 @@
     "rustc": "rustc 1.94.0-nightly (86a49fd71 2026-01-14)",
     "bootimage": "bootimage 0.10.3",
     "qemu": "QEMU emulator version 10.2.1 (Debian 1:10.2.1+ds-1ubuntu3.3)",
-    "host": "Linux-7.0.0-1016-aws-x86_64-with-glibc2.43"
+    "host": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43"
   },
   "suites": [
     {
@@ -117,7 +117,7 @@
       "errors": 0,
       "used_before": 0,
       "used_after": 64,
-      "cycles": 162370
+      "cycles": 183089
     },
     {
       "name": "exp1_alloc_free_sequence",
@@ -126,7 +126,7 @@
       "errors": 0,
       "used_before": 0,
       "used_after": 0,
-      "cycles": 610633750,
+      "cycles": 830573986,
       "exhaustions": 0
     },
     {
@@ -136,7 +136,7 @@
       "errors": 0,
       "used_before": 0,
       "used_after": 256,
-      "cycles": 100438034
+      "cycles": 140611380
     },
     {
       "name": "exp3_exhaustion_and_recovery",
@@ -145,7 +145,7 @@
       "errors": 0,
       "used_before": 0,
       "used_after": 0,
-      "cycles": 195055330
+      "cycles": 258594879
     },
     {
       "name": "exp4_page_cycle",
@@ -154,7 +154,7 @@
       "errors": 0,
       "used_before": 0,
       "used_after": 0,
-      "cycles": 134067856
+      "cycles": 186805420
     },
     {
       "name": "exp5_under_interrupts",
@@ -163,7 +163,7 @@
       "errors": 0,
       "used_before": 0,
       "used_after": 0,
-      "cycles": 834343430
+      "cycles": 1076733644
     },
     {
       "name": "exp6_phase_change",
@@ -172,7 +172,7 @@
       "errors": 0,
       "used_before": 0,
       "used_after": 0,
-      "cycles": 109914,
+      "cycles": 129458,
       "small_blocks": 1600
     }
   ]
