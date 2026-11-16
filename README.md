@@ -2,7 +2,7 @@
 
 > **FerrumOS** is an experimental operating system written entirely in **Rust**, built for pedagogical and research purposes. It aims to provide deep, hands-on mastery of fundamental OS layers — boot, memory management (paging), interrupts, scheduling, and kernel architecture — while leveraging Rust's memory safety guarantees with minimal `unsafe` code.
 
-**Start here** · [Run a prototype](#getting-started) · [Documentation](./docs/README.md) · [Greenlight](./docs/greenlights/README.md) · [Contributing](./CONTRIBUTING.md)
+**Start here** · [Build the project](#project-skeleton) · [Source architecture](./docs/architecture.md) · [Documentation](./docs/README.md) · [Greenlight](./docs/greenlights/README.md) · [Contributing](./CONTRIBUTING.md)
 
 ---
 
@@ -46,7 +46,7 @@ The project is structured around **4 team members**, each responsible for a dedi
 - Hardware interrupts operational (timer, keyboard)
 - CLI shell with `help`, `version`, `mem` commands
 
-The project currently has **3 independent Proofs of Concept**. The next major milestone is converging them into a single unified codebase.
+The project currently has **3 independent Proofs of Concept** and a compilable project skeleton in [`src/`](./src/). The source tree reserves the kernel, hardware, driver, service, interface and program layers for future integration. It contains module declarations and documentation, with no implemented OS functionality or bootable image yet. The next major milestone is integrating the PoCs into this common structure.
 
 ---
 
@@ -54,10 +54,23 @@ The project currently has **3 independent Proofs of Concept**. The next major mi
 
 ```text
 .
-├── .github/       GitHub Actions and pull request template
+├── Cargo.toml            Root package and workspace configuration
+├── Cargo.lock            Dependency resolution
+├── rust-toolchain.toml   Pinned Rust toolchain
+├── .github/              GitHub Actions and pull request template
 ├── CONTRIBUTING.md
+├── src/
+│   ├── lib.rs            FerrumOS library root (no_std)
+│   ├── boot/             Bootloader integration and initialization
+│   ├── arch/x86_64/      CPU, memory and interrupt mechanisms
+│   ├── kernel/           Memory contracts, scheduling, execution and telemetry
+│   ├── drivers/          Serial, display, input, storage and network devices
+│   ├── services/         Filesystems and networking services
+│   ├── ui/               Shell and monitoring
+│   └── programs/         Future user programs
 ├── docs/
 │   ├── README.md          Documentation index
+│   ├── architecture.md   Source layout and module responsibilities
 │   ├── ORGANIZATION.md    Team organization and project context
 │   ├── dossiers/          EIP design dossiers
 │   ├── eip/               Briefs and task allocation
@@ -84,7 +97,8 @@ The project currently has **3 independent Proofs of Concept**. The next major mi
 
 | Tool | Role | Justification |
 |------|------|---------------|
-| **Rust nightly** | Language & kernel compilation | Memory safety (ownership), `no_std`, `build-std`, `x86_64-unknown-none` target |
+| **Rust 1.94.0** | Project skeleton compilation | Pinned toolchain, `no_std` library, host and `x86_64-unknown-none` builds |
+| **Rust nightly** | Prototype compilation | Experimental kernel features and `build-std` used by the PoCs |
 | **cargo-bootimage / bootloader** | Bootable image generation | Builds a bootable image from Rust source |
 | **QEMU x86_64** | Execution & validation | Isolation, reproducibility, easy debugging |
 | **GDB** | Kernel debugging | Register/memory/IDT inspection live |
@@ -96,11 +110,48 @@ The project currently has **3 independent Proofs of Concept**. The next major mi
 
 ## Getting Started
 
-### Prerequisites
+### Project Skeleton
 
-- **Rust nightly** (required for `x86_64-unknown-none` and `build-std`)
+The root Cargo package `ferrumos` uses Rust **1.94.0**, selected by
+`rust-toolchain.toml`. With `rustup` installed, run all project commands from the
+repository root:
+
+```sh
+cargo build --workspace --lib --locked --offline
+cargo build --workspace --lib --target x86_64-unknown-none --locked --offline
+```
+
+The first invocation installs the pinned toolchain and components if needed, which
+requires network access. Subsequent Cargo builds need no network: the skeleton has
+no external dependencies. The results are libraries under `target/`, not bootable
+images. See the [source architecture](./docs/architecture.md) for module boundaries
+and the correspondence with the design documents.
+
+### Quality Checks
+
+```sh
+cargo fmt --all -- --check
+cargo check --workspace --all-targets --locked --offline
+cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+cargo clippy --workspace --lib --target x86_64-unknown-none --locked --offline -- -D warnings
+cargo doc --workspace --no-deps --locked --offline
+```
+
+The [project CI](./.github/workflows/kernel.yml) runs these checks and both library
+builds from the root, treating documentation warnings as errors as well. There are
+no behavioral tests yet because the modules contain no implementation. Add tests
+with each future contract or behavior; compilation alone does not validate boot or
+hardware operation.
+
+### Prototype Prerequisites
+
+- **Rust nightly** (used by the prototype build pipelines and `build-std`)
 - **QEMU** (for running the OS)
 - `cargo-bootimage` and `rust-src` component
+
+The PoCs remain independent Cargo projects, excluded from the root workspace.
+`POC/rust-toolchain.toml` selects nightly for them; the graphics PoC also retains
+its own toolchain file. Run prototype setup commands from the relevant PoC directory.
 
 ```sh
 # Add the rust-src component
@@ -123,6 +174,9 @@ See the [QEMU operations guide](./docs/greenlights/objecitf_obligatoire_2/md/exp
 ---
 
 ## Architecture
+
+The [source architecture guide](./docs/architecture.md) maps these layers to
+`src/` and describes the responsibilities of the future modules.
 
 Layered architecture inspired by the C4 model:
 
@@ -188,6 +242,7 @@ See [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) for the full task breakdown
 
 ## Documentation
 
+- [Source architecture and module responsibilities](./docs/architecture.md)
 - [Documentation index](./docs/README.md) and [Greenlight dossier](./docs/greenlights/README.md)
 - [Contribution and review guide](./CONTRIBUTING.md)
 - [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) — Task distribution, roadmap, team commitments
