@@ -16,13 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
+      # Same pin as the Scheduler PoC: x86_64 0.14 stops compiling once the
+      # Step trait gains forward_overflowing (newer nightlies).
+      - name: Install Rust nightly-2026-01-15
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: nightly-2026-01-15
           components: rust-src, llvm-tools-preview
       - name: Install bootimage
-        run: cargo install bootimage
+        run: cargo install bootimage --version 0.10.3 --locked
       - name: Build Reference PoC
+        # target, build-std and runner come from .cargo/config.toml
         run: |
           cd POC/ferrumos_PoC
           cargo bootimage
@@ -63,12 +67,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
+      # bootloader 0.11 builds its own stages with x86_64 0.15, which needs a
+      # nightly that has Step::forward_overflowing, so this PoC cannot share
+      # the 2026-01-15 pin. No bootimage: the image is made by build.rs.
+      - name: Install Rust nightly-2026-11-16
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: nightly-2026-11-16
+          targets: x86_64-unknown-none
           components: rust-src, llvm-tools-preview
-      - name: Install bootimage
-        run: cargo install bootimage
       - name: Build Graphics PoC
         run: |
           cd POC/ferrum_Poc_graphic
@@ -77,7 +84,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ferrumos-graphics-bootimage
-          path: POC/ferrum_Poc_graphic/target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
+          path: POC/ferrum_Poc_graphic/target/debug/build/**/ferrumos_graphic-bios.img
+          if-no-files-found: error
 
   lint:
     name: Lint
