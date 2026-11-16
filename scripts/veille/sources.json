@@ -1,0 +1,20 @@
+{
+  "description": "Sources suivies automatiquement pour la veille de l'objectif 1 (docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md). Chaque source a un responsable : c'est lui qui lit l'entrée du digest et décide s'il faut une entrée dans le journal de veille.",
+  "sources": [
+    {"id": "crate:linked_list_allocator", "type": "crate", "name": "linked_list_allocator", "area": "allocateurs", "owner": "Rayan", "why": "Allocateur à liste chaînée de référence (Redox, blog phil-opp) : comparaison directe avec notre candidat A."},
+    {"id": "crate:talc", "type": "crate", "name": "talc", "area": "allocateurs", "owner": "Rayan", "why": "Allocateur no_std utilisé par le noyau Hermit ; alternative mature si notre implémentation atteint ses limites."},
+    {"id": "crate:rlsf", "type": "crate", "name": "rlsf", "area": "allocateurs", "owner": "Rayan", "why": "TLSF en Rust, utilisé par le prototype d'exploration."},
+    {"id": "crate:buddy_system_allocator", "type": "crate", "name": "buddy_system_allocator", "area": "allocateurs", "owner": "Rayan", "why": "Allocateur buddy (rCore) : approche écartée, à réévaluer si l'on gère des pages entières."},
+    {"id": "gh:rust-osdev/x86_64", "type": "github_release", "repo": "rust-osdev/x86_64", "area": "toolchain", "owner": "Benjamin", "why": "Dépendance du noyau ; la 0.14 casse avec les nightlies récentes (TEST_ENVIRONMENT.md)."},
+    {"id": "gh:rust-osdev/bootloader", "type": "github_release", "repo": "rust-osdev/bootloader", "area": "toolchain", "owner": "Benjamin", "why": "Chargeur des PoC (0.9 pour le noyau, 0.11 pour le PoC graphique) : migration à prévoir."},
+    {"id": "gh:rust-osdev/bootimage", "type": "github_release", "repo": "rust-osdev/bootimage", "area": "toolchain", "owner": "Elias", "why": "Épinglé en 0.10.3 : la 0.10.5 passe -Zjson-target-spec. Surveiller un correctif."},
+    {"id": "gh:asterinas/asterinas", "type": "github_release", "repo": "asterinas/asterinas", "area": "architecture", "owner": "Mathias", "why": "OS Rust de référence de la note d'architecture ; tas slab par cœur (osdk-heap-allocator)."},
+    {"id": "gh:theseus-os/Theseus", "type": "github_commits", "repo": "theseus-os/Theseus", "area": "architecture", "owner": "Mathias", "why": "OS Rust à composants cité dans la note d'architecture ; pas de releases, on suit les commits."},
+    {"id": "rss:phil-opp", "type": "rss", "url": "https://os.phil-opp.com/rss.xml", "area": "osdev", "owner": "Benjamin", "why": "Blog « Writing an OS in Rust » : base des PoC et du candidat B."},
+    {"id": "rss:redox", "type": "rss", "url": "https://www.redox-os.org/index.xml", "area": "architecture", "owner": "Mathias", "why": "Nouvelles de Redox (micronoyau Rust) : comparaison architecture."},
+    {"id": "rss:qemu", "type": "rss", "url": "https://www.qemu.org/feed.xml", "area": "toolchain", "owner": "Elias", "why": "Nos mesures dépendent de la version de QEMU (11.1.0 en octobre, 10.2.1 en local en novembre)."},
+    {"id": "rss:this-week-in-rust", "type": "rss", "url": "https://this-week-in-rust.org/rss.xml", "area": "rust", "owner": "Elias", "why": "Hebdomadaire Rust : changements de nightly, nouvelles crates no_std."},
+    {"id": "rss:rust-blog", "type": "rss", "url": "https://blog.rust-lang.org/feed.xml", "area": "rust", "owner": "Elias", "why": "Annonces officielles (éditions, stabilisations, changements de cibles)."},
+    {"id": "rss:lwn", "type": "rss", "url": "https://lwn.net/headlines/rss", "area": "osdev", "owner": "Mathias", "why": "Actualité du noyau Linux (allocateurs SLUB, Rust for Linux)."}
+  ]
+}

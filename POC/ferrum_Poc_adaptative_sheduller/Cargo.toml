@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 authors = ["FerrumOS Team"]
 
+[[bin]]
+name = "ferrumos"
+path = "src/main.rs"
+test = false
+
+[lib]
+name = "ferrumos"
+path = "src/lib.rs"
+
 [dependencies]
 bootloader = { version = "0.9.23", features = ["map_physical_memory"] }
 volatile = "0.2.6"
@@ -11,6 +20,17 @@ spin = "0.9.4"
 x86_64 = "0.14.10"
 pic8259 = "0.10.1"
 pc-keyboard = "0.7.0"
+# Kernel heap allocators, shared with the host benchmark (objective 1).
+ferrum_alloc = { path = "../../libs/ferrum_alloc" }
+
+[features]
+# One heap-* feature only. The default comes from the objective 1 decision
+# (docs/greenlights/objecitf_obligatoire_1/tas_noyau/08_note_decision.md). To replay the "before" measurements:
+#   cargo test --no-default-features --features heap-bump
+default = ["heap-linked-list"]
+heap-linked-list = []
+heap-fixed-block = []
+heap-bump = []
 
 [dependencies.lazy_static]
 version = "1.4.0"
@@ -20,3 +40,27 @@ features = ["spin_no_std"]
 test-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio", "-display", "none"]
 test-success-exit-code = 33
 test-timeout = 300
+
+[[test]]
+name = "experiment_1"
+harness = false
+
+[[test]]
+name = "experiment_2"
+harness = false
+
+[[test]]
+name = "experiment_3"
+harness = false
+
+[[test]]
+name = "experiment_4"
+harness = false
+
+[[test]]
+name = "experiment_5"
+harness = false
+
+[[test]]
+name = "experiment_6"
+harness = false

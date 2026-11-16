@@ -4,6 +4,7 @@
 
 # Cargo / rustup local state
 /.cargo/
+!/.cargo/config.toml
 
 # Temporary/debug logs
 *.log

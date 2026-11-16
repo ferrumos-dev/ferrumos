@@ -63,8 +63,10 @@ The project currently has **3 independent Proofs of Concept**. The next major mi
 │   ├── eip/               Briefs and task allocation
 │   ├── greenlights/       Greenlight documents, organized by objective
 │   └── presentations/    Presentation materials
+├── libs/         Shared no_std crates (ferrum_alloc: kernel heap allocators)
 ├── POC/          Independent reference, scheduler and graphics prototypes
-├── scripts/      Repository utilities
+├── research/     Host benchmarks and experiments (heap allocator)
+├── scripts/      Repository utilities: kernel tests under QEMU, research watch
 └── targets/      Shared target specifications
 ```
 
@@ -190,6 +192,8 @@ See [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) for the full task breakdown
 
 - [Documentation index](./docs/README.md) and [Greenlight dossier](./docs/greenlights/README.md)
 - [Contribution and review guide](./CONTRIBUTING.md)
+- [Kernel heap](./docs/greenlights/objecitf_obligatoire_1/tas_noyau/README.md) — Greenlight mandatory objective 1: kernel heap hard problem (99 → 10 000), research watch, prototypes, decision, integration
+- [`libs/ferrum_alloc/`](./libs/ferrum_alloc/) — Kernel heap allocators (linked list by default), shared by the kernel and the host benchmark
 - [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) — Task distribution, roadmap, team commitments
 - [`docs/dossiers/FerrumOS_Dossiers_Complets.md`](./docs/dossiers/FerrumOS_Dossiers_Complets.md) — Compiled design dossiers (requirements, context, architecture, budgeting, risks)
 - [`docs/presentations/FerrumOS_Presentations_Summary.md`](./docs/presentations/FerrumOS_Presentations_Summary.md) — Presentation summaries
