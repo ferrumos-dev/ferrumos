@@ -2,7 +2,7 @@
 
 > **FerrumOS** is an experimental operating system written entirely in **Rust**, built for pedagogical and research purposes. It aims to provide deep, hands-on mastery of fundamental OS layers — boot, memory management (paging), interrupts, scheduling, and kernel architecture — while leveraging Rust's memory safety guarantees with minimal `unsafe` code.
 
-**Start here** · [Build the project](#project-skeleton) · [Source architecture](./docs/architecture.md) · [Documentation](./docs/README.md) · [Greenlight](./docs/greenlights/README.md) · [Contributing](./CONTRIBUTING.md)
+**Start here** · [Run FerrumOS](#integrated-kernel) · [Boot guide](./docs/boot.md) · [Source architecture](./docs/architecture.md) · [Documentation](./docs/README.md) · [Contributing](./CONTRIBUTING.md)
 
 ---
 
@@ -27,7 +27,7 @@
 
 FerrumOS is not intended to compete with existing operating systems. Instead, its purpose is to **master the internals** of a modern OS from the ground up:
 
-- **Boot process** — custom bootloader pipeline using `cargo-bootimage`
+- **Boot process** — integrated BIOS image using `bootloader 0.11.15`; older PoCs retain their own pipelines
 - **Memory management** — x86_64 paging (4-level page tables), isolation, custom heap allocator (Bump → linked-list / fixed-size blocks)
 - **Interrupt handling** — IDT, PIC/APIC, timer, keyboard, exception handlers
 - **Scheduling** — adaptive-priority simulation in the scheduler PoC and a priority policy proposed for the integrated kernel
@@ -39,6 +39,16 @@ The project is structured around **4 team members**, each responsible for a dedi
 
 ## Project Status
 
+**Integrated kernel in `src/`**
+
+- BIOS boot under QEMU from the root project, with a framebuffer text console and COM1 diagnostics
+- Polled PS/2 keyboard input using French AZERTY, editable UTF-8 lines, Backspace, Enter and Escape
+- Host driver tests and an automated QEMU check of boot, keyboard editing and a nonblank framebuffer
+
+The input console echoes lines; it does not execute shell commands. Heap initialization,
+timer interrupts, scheduling, filesystem services and user space remain integration work.
+See the [boot guide](./docs/boot.md) for the supported configuration and verification limits.
+
 **Reference PoC milestones reported in the EIP documentation**
 
 - Boot stable and reproducible under QEMU
@@ -46,7 +56,8 @@ The project is structured around **4 team members**, each responsible for a dedi
 - Hardware interrupts operational (timer, keyboard)
 - CLI shell with `help`, `version`, `mem` commands
 
-The project currently has **3 independent Proofs of Concept** and a compilable project skeleton in [`src/`](./src/). The source tree reserves the kernel, hardware, driver, service, interface and program layers for future integration. It contains module declarations and documentation, with no implemented OS functionality or bootable image yet. The next major milestone is integrating the PoCs into this common structure.
+The **3 independent Proofs of Concept** remain available as integration references.
+Their reported features do not imply that those features already run in the root kernel.
 
 ---
 
@@ -61,6 +72,7 @@ The project currently has **3 independent Proofs of Concept** and a compilable p
 ├── CONTRIBUTING.md
 ├── src/
 │   ├── lib.rs            FerrumOS library root (no_std)
+│   ├── main.rs           Bare-metal bootloader entry point
 │   ├── boot/             Bootloader integration and initialization
 │   ├── arch/x86_64/      CPU, memory and interrupt mechanisms
 │   ├── kernel/           Memory contracts, scheduling, execution and telemetry
@@ -71,6 +83,7 @@ The project currently has **3 independent Proofs of Concept** and a compilable p
 ├── docs/
 │   ├── README.md          Documentation index
 │   ├── architecture.md   Source layout and module responsibilities
+│   ├── boot.md           Build, launch, diagnostics and boot tests
 │   ├── ORGANIZATION.md    Team organization and project context
 │   ├── dossiers/          EIP design dossiers
 │   ├── eip/               Briefs and task allocation
@@ -79,8 +92,8 @@ The project currently has **3 independent Proofs of Concept** and a compilable p
 ├── libs/         Shared no_std crates (ferrum_alloc: kernel heap allocators)
 ├── POC/          Independent reference, scheduler and graphics prototypes
 ├── research/     Host benchmarks and experiments (heap allocator)
-├── scripts/      Repository utilities: kernel tests under QEMU, research watch
-└── targets/      Shared target specifications
+├── tools/image-builder/  Isolated host tool producing the BIOS image
+└── scripts/      Root boot/run/test commands, PoC tests and research watch
 ```
 
 ---
@@ -99,51 +112,62 @@ The project currently has **3 independent Proofs of Concept** and a compilable p
 
 | Tool | Role | Justification |
 |------|------|---------------|
-| **Rust 1.94.0** | Project skeleton compilation | Pinned toolchain, `no_std` library, host and `x86_64-unknown-none` builds |
-| **Rust nightly** | Prototype compilation | Experimental kernel features and `build-std` used by the PoCs |
-| **cargo-bootimage / bootloader** | Bootable image generation | Builds a bootable image from Rust source |
+| **Rust 1.94.0** | Root library and kernel compilation | Pinned stable toolchain and built-in `x86_64-unknown-none` target |
+| **nightly-2026-03-07** | Isolated image builder | Builds the BIOS stages required by `bootloader 0.11.15` |
+| **bootloader / bootloader_api 0.11.15** | BIOS image and kernel ABI | Matching pinned versions for the boot interface |
+| **Python 3.11+** | Root build, launch and smoke-test commands | Standard-library script shared by local development and CI |
+| **Rust nightly / cargo-bootimage** | Independent PoCs | Their versions and build commands remain scoped to each prototype |
 | **QEMU x86_64** | Execution & validation | Isolation, reproducibility, easy debugging |
 | **GDB** | Kernel debugging | Register/memory/IDT inspection live |
 | **Git + GitHub + CI/CD** | Versioning & integration | Component traceability, automated validation |
-| **Make** | Build/boot automation | Targets: `install`, `boot`, `build`, `run`, `run-debug`, `run-serial`, `clean` |
-| **Custom target** | `x86_64-ferrumos.json` | Bare-metal kernel specification |
+| **Make** | Prototype build/boot automation | Existing PoC targets remain independent of the root build |
+| **Custom targets in each PoC** | `x86_64-ferrumos.json` | Prototype specifications; the root uses the built-in target |
 
 ---
 
 ## Getting Started
 
-### Project Skeleton
+### Integrated Kernel
 
-The root Cargo package `ferrumos` uses Rust **1.94.0**, selected by
-`rust-toolchain.toml`. With `rustup` installed, run all project commands from the
+Install **rustup**, **Python 3.11+** and **QEMU x86_64**, then prepare the pinned
+toolchains using the [boot guide](./docs/boot.md#préparer-les-outils). From the
 repository root:
 
 ```sh
-cargo build --workspace --lib --locked --offline
-cargo build --workspace --lib --target x86_64-unknown-none --locked --offline
+python scripts/boot.py build
+python scripts/boot.py run
+python scripts/boot.py test --timeout 30
 ```
 
-The first invocation installs the pinned toolchain and components if needed, which
-requires network access. Subsequent Cargo builds need no network: the skeleton has
-no external dependencies. The results are libraries under `target/`, not bootable
-images. See the [source architecture](./docs/architecture.md) for module boundaries
-and the correspondence with the design documents.
+On systems where Python 3 is named `python3`, use that command instead.
+`run` opens the QEMU console; click inside it to type, and use Ctrl+Alt to release
+the keyboard and mouse. Each command rebuilds the root kernel and BIOS image,
+failing instead of booting an old image when compilation fails.
+
+The kernel, image and logs stay under `target/`, ignored by Git. Initial toolchain
+and dependency downloads require the network. The [boot guide](./docs/boot.md)
+describes the AZERTY input console, QEMU discovery and diagnostics.
 
 ### Quality Checks
 
 ```sh
+cargo fetch --locked
 cargo fmt --all -- --check
 cargo check --workspace --all-targets --locked --offline
 cargo clippy --workspace --all-targets --locked --offline -- -D warnings
-cargo clippy --workspace --lib --target x86_64-unknown-none --locked --offline -- -D warnings
+cargo test --workspace --lib --locked --offline
+cargo build --workspace --lib --target x86_64-unknown-none --locked --offline
+cargo clippy --workspace --lib --bin ferrumos --features baremetal --target x86_64-unknown-none --locked --offline -- -D warnings
 cargo doc --workspace --no-deps --locked --offline
+python -m unittest discover -s scripts -p test_boot.py -v
+python scripts/boot.py test --timeout 30
 ```
 
-The [project CI](./.github/workflows/kernel.yml) runs these checks and both library
-builds from the root, treating documentation warnings as errors as well. There are
-no behavioral tests yet because the modules contain no implementation. Add tests
-with each future contract or behavior; compilation alone does not validate boot or
-hardware operation.
+The [project CI](./.github/workflows/kernel.yml) runs host checks, the actual BIOS
+image and QEMU input test, and preserves boot diagnostics. Documentation warnings
+are errors in CI. The image builder and heap crates retain their own manifests
+and lockfiles; the root workspace excludes them. See the [boot guide](./docs/boot.md#contrôles-et-preuves)
+for the distinction between host tests, QEMU observations and remaining work.
 
 ### Prototype Prerequisites
 
@@ -153,7 +177,8 @@ hardware operation.
 
 The PoCs remain independent Cargo projects, excluded from the root workspace.
 `POC/rust-toolchain.toml` selects nightly for them; the graphics PoC also retains
-its own toolchain file. Run prototype setup commands from the relevant PoC directory.
+its own toolchain file, and the scheduler PoC pins its tested nightly. Run prototype
+setup commands from the relevant PoC directory.
 
 ```sh
 # Add the rust-src component
@@ -178,7 +203,7 @@ See the [QEMU operations guide](./docs/greenlights/objecitf_obligatoire_2/md/exp
 ## Architecture
 
 The [source architecture guide](./docs/architecture.md) maps these layers to
-`src/` and describes the responsibilities of the future modules.
+`src/` and distinguishes the implemented boot/driver path from future modules.
 
 Layered architecture inspired by the C4 model:
 
@@ -244,6 +269,7 @@ See [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) for the full task breakdown
 
 ## Documentation
 
+- [Root kernel boot, input and verification](./docs/boot.md)
 - [Source architecture and module responsibilities](./docs/architecture.md)
 - [Documentation index](./docs/README.md) and [Greenlight dossier](./docs/greenlights/README.md)
 - [Contribution and review guide](./CONTRIBUTING.md)
@@ -254,7 +280,7 @@ See [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) for the full task breakdown
 - [`docs/presentations/FerrumOS_Presentations_Summary.md`](./docs/presentations/FerrumOS_Presentations_Summary.md) — Presentation summaries
 - [`docs/eip/enonce_suivi1.txt`](./docs/eip/enonce_suivi1.txt) — EIP (student project) brief
 - [`docs/eip/repartitions.txt`](./docs/eip/repartitions.txt) — Initial task allocation
-- [`targets/x86_64-ferrumos.json`](./targets/x86_64-ferrumos.json) — Canonical bare-metal target specification
+- Bare-metal targets: the root project builds for the built-in `x86_64-unknown-none` target; each PoC keeps its own `x86_64-ferrumos.json` specification
 - Individual PoC READMEs in `POC/` — Build/run instructions per PoC
 
 ---

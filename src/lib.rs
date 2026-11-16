@@ -1,9 +1,9 @@
 //! FerrumOS: a modular operating system written in Rust.
 //!
 //! The source tree separates portable kernel policies, architecture-specific
-//! mechanisms, drivers and higher-level services. Modules currently describe
-//! their responsibilities; runtime behavior and a bootable entry point will
-//! be introduced as the existing prototypes are integrated.
+//! mechanisms, drivers and higher-level services. The boot path initializes
+//! a framebuffer console, serial diagnostics and polled PS/2 input. Kernel
+//! policies and higher-level services remain independent integration work.
 
 #![no_std]
 

@@ -1,7 +1,13 @@
-//! Reserved for the kernel's boot integration.
+//! Kernel boot integration for the BIOS/QEMU image.
 //!
-//! The future entry point will translate bootloader information and coordinate
-//! initialization of CPU state, memory, interrupts and drivers. The bootloader
-//! ABI and initialization order must be chosen when integrating a prototype.
+//! The bootloader supplies the stack, memory map and framebuffer. This layer
+//! owns the first console and polls the keyboard with maskable interrupts
+//! disabled. Paging/heap management, timer IRQs and a command shell remain
+//! separate integration tasks; the input loop only echoes editable lines.
 //!
-//! No entry point or initialization routine is supplied by this skeleton.
+//! No hardware initialization runs when the library is tested on the host.
+
+#[cfg(all(target_arch = "x86_64", target_os = "none"))]
+mod runtime;
+#[cfg(all(target_arch = "x86_64", target_os = "none"))]
+pub use runtime::run;

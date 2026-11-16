@@ -305,5 +305,5 @@ au projet pédagogique.
 - Documents internes : `docs/dossiers/` (Dossiers 1 à 5)
 - Présentations : `docs/presentations/FerrumOS_Presentations_Summary.md`
 - PoCs : `POC/ferrumos_PoC`, `POC/ferrum_Poc_adaptative_sheduller`, `POC/ferrum_Poc_graphic`
-- Target spec : `targets/x86_64-ferrumos.json`
+- Cibles : `x86_64-unknown-none` (cible intégrée) pour le projet racine ; chaque PoC garde sa spécification `x86_64-ferrumos.json`
 - Externes : `wiki.osdev.org`, `os.phil-opp.com`, `rust-lang.org`

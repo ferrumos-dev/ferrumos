@@ -3,6 +3,7 @@
 | Besoin | Document |
 | --- | --- |
 | Compiler le projet et lancer les contrôles | [Démarrage et vérifications](../README.md#getting-started) |
+| Lancer l'image du noyau et vérifier affichage et saisie | [Démarrage BIOS, console et diagnostics](./boot.md) |
 | Placer le code et préparer les prochaines couches | [Architecture des sources](./architecture.md) |
 | Comprendre la structure et les rôles | [Organisation technique](./ORGANIZATION.md) |
 | Préparer et vérifier la Greenlight | [Dossier Greenlight](./greenlights/README.md) |

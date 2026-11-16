@@ -13,7 +13,25 @@ exclude = [
     "POC/ferrumos_PoC",
     "POC/ferrum_Poc_adaptative_sheduller",
     "POC/ferrum_Poc_graphic",
+    "libs/ferrum_alloc",
+    "research/heap-allocator/bench",
+    "tools/image-builder",
 ]
+
+[features]
+baremetal = []
+
+[dependencies]
+bootloader_api = "=0.11.15"
+font8x8 = { version = "=0.3.1", default-features = false, features = ["unicode"] }
+pc-keyboard = "=0.7.0"
+
+[[bin]]
+name = "ferrumos"
+path = "src/main.rs"
+required-features = ["baremetal"]
+test = false
+bench = false
 
 [lints.rust]
 missing_docs = "deny"
