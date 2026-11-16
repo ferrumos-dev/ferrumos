@@ -114,6 +114,31 @@ class BootChecks(unittest.TestCase):
         with self.assertRaisesRegex(boot.BootError, "bad key"):
             client.execute("send-key")
 
+    def test_quit_tolerates_qemu_closing_before_reply(self):
+        for closing in (ConnectionResetError(104, "Connection reset by peer"), b""):
+            connection = Mock(spec=socket.socket)
+            connection.recv.side_effect = [b'{"QMP": {}}\n', b'{"return": {}, "id": 1}\n', closing]
+            client = boot.Qmp(connection, time.monotonic() + 1)
+            client.quit()
+
+    def test_quit_error_reply_is_still_a_failure(self):
+        connection = Mock(spec=socket.socket)
+        connection.recv.side_effect = [
+            b'{"QMP": {}}\n',
+            b'{"return": {}, "id": 1}\n',
+            b'{"error": {"desc": "quit refused"}, "id": 2}\n',
+        ]
+        client = boot.Qmp(connection, time.monotonic() + 1)
+        with self.assertRaisesRegex(boot.BootError, "quit refused"):
+            client.quit()
+
+    def test_closed_connection_still_fails_other_commands(self):
+        connection = Mock(spec=socket.socket)
+        connection.recv.side_effect = [b'{"QMP": {}}\n', b'{"return": {}, "id": 1}\n', b""]
+        client = boot.Qmp(connection, time.monotonic() + 1)
+        with self.assertRaisesRegex(boot.BootError, "closed"):
+            client.execute("screendump")
+
     def test_invalid_explicit_qemu_does_not_fall_back(self):
         with patch.dict(boot.os.environ, {"QEMU": "missing-qemu"}), \
                 patch.object(boot.shutil, "which", return_value=None):

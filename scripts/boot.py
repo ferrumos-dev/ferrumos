@@ -28,6 +28,10 @@ class BootError(RuntimeError):
     """A build or VM check failed; never continue with an old image."""
 
 
+class QmpClosed(BootError):
+    """QEMU closed the QMP connection before sending the awaited reply."""
+
+
 def toolchain(directory: Path) -> str:
     with (directory / "rust-toolchain.toml").open("rb") as source:
         return tomllib.load(source)["toolchain"]["channel"]
@@ -148,7 +152,7 @@ class Qmp:
             self.connection.settimeout(remaining)
             chunk = self.connection.recv(65536)
             if not chunk:
-                raise BootError("QMP connection closed")
+                raise QmpClosed("QMP connection closed")
             self.buffer += chunk
         line, self.buffer = self.buffer.split(b"\n", 1)
         return json.loads(line)
@@ -168,6 +172,17 @@ class Qmp:
             if "return" not in reply:
                 raise BootError(f"QMP {command} returned an invalid response")
             return reply["return"]
+
+    def quit(self) -> None:
+        """Ask QEMU to exit.
+
+        QEMU may close the connection before its reply arrives, so a lost reply
+        is not a failure: the caller judges the outcome from the exit code.
+        """
+        try:
+            self.execute("quit")
+        except (ConnectionError, QmpClosed):
+            pass
 
 
 def connect_qmp(process: subprocess.Popen, port: int, deadline: float) -> socket.socket:
@@ -250,7 +265,7 @@ def smoke_test(image: Path, executable: str, timeout: float) -> None:
             qmp.execute("screendump", {"filename": screenshot.as_posix()})
             summary["framebuffer"] = verify_screenshot(screenshot)
             ensure_running(process)
-            qmp.execute("quit")
+            qmp.quit()
             process.wait(timeout=max(0.1, deadline - time.monotonic()))
             if process.returncode != 0:
                 raise BootError(f"QEMU quit with code {process.returncode}")
