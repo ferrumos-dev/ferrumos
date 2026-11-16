@@ -1,0 +1,57 @@
+## Tests noyau QEMU — `c88bde4`
+
+> Révision : arbre de travail non commité au-dessus de `c88bde4`, commité ensuite dans `18fd351` (le titre et `results.json` indiquent `c88bde4`). Cible : images de test x86_64 du PoC d’ordonnancement sous QEMU 10.2.1, allocateur `heap-bump`. Date : 2026-11-12. Environnement : [`test_environment.md`](../../../../../../POC/ferrum_Poc_adaptative_sheduller/test_environment.md).
+
+| Image de test | Statut | Tests |
+|---|---|---|
+| `lib` | ✅ passed | 9/9 |
+| `experiment_1` | ✅ passed | — |
+| `experiment_2` | ✅ passed | — |
+| `experiment_3` | ✅ passed | — |
+| `experiment_4` | ✅ passed | — |
+| `experiment_5` | ✅ passed | — |
+| `experiment_6` | ✅ passed | — |
+
+| Mesure | Règle (baseline) | Précédent | Actuel | Écart | Statut |
+|---|---|---|---|---|---|
+| `exp1_alloc_free_sequence.iterations` | >= 10000 |  | 10000 |  | ✅ |
+| `exp1_alloc_free_sequence.errors` | <= 0 |  | 0 |  | ✅ |
+| `exp1_alloc_free_sequence.used_after` | <= 0 |  | 0 |  | ✅ |
+| `exp1_alloc_free_sequence.exhaustions` | <= 0 |  | 13 |  | ❌ > 0 |
+| `exp2_long_lived_vs_churn.iterations` | >= 10000 |  | 99 |  | ❌ < 10000 |
+| `exp2_long_lived_vs_churn.errors` | <= 0 |  | 0 |  | ✅ |
+| `exp2_long_lived_vs_churn.used_after` | <= 256 |  | 101632 |  | ❌ > 256 |
+| `exp3_exhaustion_and_recovery.iterations` | >= 3 |  | 3 |  | ✅ |
+| `exp3_exhaustion_and_recovery.errors` | <= 0 |  | 0 |  | ✅ |
+| `exp3_exhaustion_and_recovery.used_after` | <= 0 |  | 0 |  | ✅ |
+| `exp4_page_cycle.iterations` | >= 500 |  | 500 |  | ✅ |
+| `exp4_page_cycle.errors` | <= 0 |  | 0 |  | ✅ |
+| `exp4_page_cycle.used_after` | <= 0 |  | 0 |  | ✅ |
+| `exp5_under_interrupts.iterations` | >= 10200 |  | 10200 |  | ✅ |
+| `exp5_under_interrupts.errors` | <= 0 |  | 0 |  | ✅ |
+| `exp5_under_interrupts.used_after` | <= 0 |  | 0 |  | ✅ |
+| `box_alloc_64B.errors` | <= 0 |  | 0 |  | ✅ |
+| `exp6_phase_change.iterations` | >= 95 |  | 100 |  | ✅ |
+| `exp6_phase_change.errors` | <= 0 |  | 0 |  | ✅ |
+| `exp6_phase_change.used_after` | <= 0 |  | 0 |  | ✅ |
+
+<details><summary>Cycles (indicatif, ±20 % sous QEMU, jamais bloquant)</summary>
+
+| Mesure | Précédent | Actuel | Écart |
+|---|---|---|---|
+| `box_alloc_64B.cycles` |  | 195776 |  |
+| `exp1_alloc_free_sequence.cycles` |  | 655344382 |  |
+| `exp2_long_lived_vs_churn.cycles` |  | 1080666 |  |
+| `exp3_exhaustion_and_recovery.cycles` |  | 298683336 |  |
+| `exp4_page_cycle.cycles` |  | 175709958 |  |
+| `exp5_under_interrupts.cycles` |  | 829769756 |  |
+| `exp6_phase_change.cycles` |  | 152920 |  |
+
+</details>
+
+Aucun run précédent disponible pour la comparaison.
+
+**❌ 3 problème(s) :**
+- exp1_alloc_free_sequence.exhaustions = 13 (> 0, rule <= 0)
+- exp2_long_lived_vs_churn.iterations = 99 (< 10000, rule >= 10000)
+- exp2_long_lived_vs_churn.used_after = 101632 (> 256, rule <= 256)

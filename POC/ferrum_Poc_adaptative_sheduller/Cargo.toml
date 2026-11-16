@@ -20,6 +20,17 @@ spin = "0.9.4"
 x86_64 = "0.14.10"
 pic8259 = "0.10.1"
 pc-keyboard = "0.7.0"
+# Kernel heap allocators, shared with the host benchmark (objective 1).
+ferrum_alloc = { path = "../../libs/ferrum_alloc" }
+
+[features]
+# One heap-* feature only. The default comes from the objective 1 decision
+# (docs/greenlights/objecitf_obligatoire_1/tas_noyau/08_note_decision.md). To replay the "before" measurements:
+#   cargo test --no-default-features --features heap-bump
+default = ["heap-linked-list"]
+heap-linked-list = []
+heap-fixed-block = []
+heap-bump = []
 
 [dependencies.lazy_static]
 version = "1.4.0"
@@ -48,4 +59,8 @@ harness = false
 
 [[test]]
 name = "experiment_5"
+harness = false
+
+[[test]]
+name = "experiment_6"
 harness = false

@@ -37,16 +37,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
+      # Pinned (see POC/ferrum_Poc_adaptative_sheduller/test_environment.md):
+      # newer nightlies break x86_64 0.14 and bootimage > 0.10.3 passes
+      # -Zjson-target-spec, unknown to this toolchain.
+      - name: Install Rust nightly-2026-01-15
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: nightly-2026-01-15
           components: rust-src, llvm-tools-preview
       - name: Install bootimage
-        run: cargo install bootimage
+        run: cargo install bootimage --version 0.10.3 --locked
       - name: Build Scheduler PoC
+        # target, build-std and runner come from .cargo/config.toml
         run: |
           cd POC/ferrum_Poc_adaptative_sheduller
-          make build
+          cargo bootimage
       - name: Upload boot image
         uses: actions/upload-artifact@v4
         with:

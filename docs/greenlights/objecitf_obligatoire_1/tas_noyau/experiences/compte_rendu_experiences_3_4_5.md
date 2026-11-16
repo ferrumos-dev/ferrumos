@@ -40,7 +40,7 @@ que tout ce qui précède reste vrai quand le matériel interrompt le noyau.
 ## 2. Environnement de mesure
 
 Identique à celui des expériences 1 et 2, figé dans
-`POC/ferrum_Poc_adaptative_sheduller/TEST_ENVIRONMENT.md`.
+`POC/ferrum_Poc_adaptative_sheduller/test_environment.md`.
 
 | Élément | Valeur |
 |---|---|

@@ -1,0 +1,57 @@
+name: Veille
+
+# Objective 1 research watch: every Monday, list what changed in the sources
+# of scripts/veille/sources.json and publish the digest (run summary, issue,
+# and the team Discord channel if the DISCORD_WEBHOOK_VEILLE secret is set).
+# See docs/greenlights/objecitf_obligatoire_1/tas_noyau/02_dispositif_veille.md.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The state of the previous run is kept as a cache entry: no commit needed.
+      - name: Restore previous state
+        uses: actions/cache/restore@v4
+        with:
+          path: veille-state.json
+          key: veille-state-${{ github.run_id }}
+          restore-keys: veille-state-
+
+      - name: Check the sources
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCORD_WEBHOOK_VEILLE: ${{ secrets.DISCORD_WEBHOOK_VEILLE }}
+        run: |
+          python3 scripts/veille/check_sources.py --state veille-state.json --digest digest.md
+          cat digest.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save state
+        uses: actions/cache/save@v4
+        with:
+          path: veille-state.json
+          key: veille-state-${{ github.run_id }}
+
+      - name: Open an issue for the digest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if grep -q "Rien de nouveau" digest.md; then
+            echo "nothing new, no issue"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "Veille du $(date -u +%Y-%m-%d)" \
+              --body-file digest.md \
+              --label veille || gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "Veille du $(date -u +%Y-%m-%d)" --body-file digest.md
+          fi

@@ -3,7 +3,7 @@
 > Document de référence pour le pilotage du projet **FerrumOS** et, avant tout, pour la
 > **répartition détaillée du travail** entre les 4 membres de l'équipe.
 >
-> Il constitue l'enrichissement complet de `docs/repartitions.txt` : chaque périmètre y est
+> Il constitue l'enrichissement complet de `docs/eip/repartitions.txt` : chaque périmètre y est
 > décliné en tâches concrètes, ordonnées et rattachées à un responsable, en s'appuyant sur
 > l'ensemble des livrables du dépôt (dossiers, présentations, PoC).
 >
@@ -22,6 +22,8 @@
 > - `POC/` → 3 proof of concepts (`ferrumos_PoC`, `ferrum_Poc_adaptative_sheduller`, `ferrum_Poc_graphic`)
 
 ---
+
+Pour le suivi Greenlight, consulter [l’index des documents](./greenlights/README.md). Les [règles de contribution](../CONTRIBUTING.md) indiquent où documenter un changement et comment joindre ses preuves. L’ordonnancement proposé pour le noyau commun est décrit dans la [fiche à priorités](./greenlights/objecitf_obligatoire_1/ordonnancement_a_priorites.md). La répartition et les jalons historiques du premier suivi figurent ci-dessous.
 
 ## 1. Pitch du projet
 
@@ -119,7 +121,7 @@ Aligné sur l'étude prospective (EIP B1-C05-1), horizon **H2 (6–18 mois)** :
 ## 5. Organisation de l'équipe & répartition détaillée du travail
 
 L'équipe compte **4 membres**, chacun responsable d'un **pôle technique** dérivé de
-`docs/repartitions.txt`. Cette section décline chaque pôle en **tâches concrètes**,
+`docs/eip/repartitions.txt`. Cette section décline chaque pôle en **tâches concrètes**,
 priorisées et testables, et explicite les **collaborations** entre pôles.
 
 ### 5.1 Principes de répartition

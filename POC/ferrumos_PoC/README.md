@@ -29,16 +29,16 @@ cargo install bootimage
 
 ## Building and Running
 
-1. **Build the kernel and create bootable image:**
-   ```sh
-   cargo bootimage
-   ```
+On Windows, the [build and run script](./build_and_run_ferrumos.bat) sets up the MSVC Build Tools environment, builds the image and starts QEMU. It expects the paths shown in the script.
 
-2. **Run in QEMU:**
-   ```sh
-   cargo run
-   ```
-   (This command is configured in `.cargo/config.toml` to use `bootimage runner`)
+With the nightly toolchain, `rust-src`, `llvm-tools-preview`, `bootimage` and QEMU available, the equivalent commands from this directory are:
+
+```sh
+cargo +nightly bootimage --target x86_64-ferrumos.json -Zbuild-std=core,alloc,compiler_builtins -Zbuild-std-features=compiler-builtins-mem -Zjson-target-spec
+qemu-system-x86_64 -no-reboot -no-shutdown -drive format=raw,file=target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
+```
+
+See the [QEMU operations guide](../../docs/greenlights/objecitf_obligatoire_2/md/exploitation_qemu.md) for the distinction between the current prototypes and the independent archived test harness.
 
 ## Project Structure
 

@@ -1,0 +1,15 @@
+[package]
+name = "heap_bench"
+version = "0.1.0"
+edition = "2021"
+authors = ["FerrumOS Team"]
+description = "Decision prototype: same scenarios, same protocol, every heap allocator side by side"
+publish = false
+
+[dependencies]
+ferrum_alloc = { path = "../../../libs/ferrum_alloc" }
+# Exploration prototype only (TLSF), not used by the kernel.
+rlsf = "=0.2.3"
+
+[profile.release]
+debug = 1

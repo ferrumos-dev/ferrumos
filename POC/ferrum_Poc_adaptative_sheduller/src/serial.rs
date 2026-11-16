@@ -26,6 +26,9 @@ impl SerialPort {
     }
 
     pub fn init(&mut self) {
+        // SAFETY: these are the registers of the 16550 UART at `base`
+        // (COM1), owned by this struct; the sequence is the standard
+        // 38400 baud, 8N1 initialization and touches no other device.
         unsafe {
             self.interrupt_enable.write(0x00);
             self.line_control.write(0x80);
@@ -38,6 +41,7 @@ impl SerialPort {
     }
 
     fn is_transmit_empty(&mut self) -> bool {
+        // SAFETY: reading the line status register has no side effect.
         unsafe { self.line_status.read() & 0x20 != 0 }
     }
 
@@ -55,6 +59,8 @@ impl SerialPort {
         while !self.is_transmit_empty() {
             core::hint::spin_loop();
         }
+        // SAFETY: the transmit buffer is empty (checked above), so writing
+        // the data register sends exactly this byte.
         unsafe { self.data.write(byte) }
     }
 }

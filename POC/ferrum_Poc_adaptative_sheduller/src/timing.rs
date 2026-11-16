@@ -3,6 +3,8 @@ use core::sync::atomic::{compiler_fence, Ordering};
 
 pub fn cycles() -> u64 {
     compiler_fence(Ordering::SeqCst);
+    // SAFETY: `rdtsc` is available on every x86_64 CPU and only reads the
+    // time stamp counter.
     let value = unsafe { _rdtsc() };
     compiler_fence(Ordering::SeqCst);
     value

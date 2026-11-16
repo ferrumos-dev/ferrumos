@@ -1,0 +1,12 @@
+[package]
+name = "ferrum_alloc"
+version = "0.1.0"
+edition = "2021"
+authors = ["FerrumOS Team"]
+description = "Kernel heap allocators for FerrumOS: bump (baseline), linked list and fixed-size blocks"
+publish = false
+
+# No dependency on purpose: the crate builds for the bare-metal kernel target
+# (build-std core) and for the host, where its unit tests and the benchmark in
+# research/heap-allocator/bench run on stable Rust.
+[dependencies]
