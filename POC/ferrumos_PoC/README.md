@@ -24,17 +24,17 @@ FerrumOS is a minimal Proof of Concept operating system written in Rust, demonst
 rustup component add rust-src
 
 # Install bootimage
-cargo install bootimage
+cargo install bootimage --version 0.10.3 --locked
 ```
 
 ## Building and Running
 
 On Windows, the [build and run script](./build_and_run_ferrumos.bat) sets up the MSVC Build Tools environment, builds the image and starts QEMU. It expects the paths shown in the script.
 
-With the nightly toolchain, `rust-src`, `llvm-tools-preview`, `bootimage` and QEMU available, the equivalent commands from this directory are:
+With the nightly pinned in `../rust-toolchain.toml` (`nightly-2026-01-15`), `rust-src`, `llvm-tools-preview`, `bootimage` and QEMU available, the equivalent commands from this directory are:
 
 ```sh
-cargo +nightly bootimage --target x86_64-ferrumos.json -Zbuild-std=core,alloc,compiler_builtins -Zbuild-std-features=compiler-builtins-mem -Zjson-target-spec
+cargo bootimage
 qemu-system-x86_64 -no-reboot -no-shutdown -drive format=raw,file=target/x86_64-ferrumos/debug/bootimage-ferrumos.bin
 ```
 
