@@ -1,7 +1,9 @@
 use super::*;
 
 use crate::kernel::memory::MemorySnapshot;
-use crate::kernel::telemetry::Counters;
+use crate::kernel::telemetry::{
+    Counters, KernelReporter, UnwiredKernel, UNKNOWN_TICK_PERIOD_MICROSECONDS,
+};
 
 const BUFFER_LEN: usize = 512;
 const HEAP_CAPACITY: u64 = 100 * 1024;
@@ -162,6 +164,59 @@ fn every_line_is_labelled_and_terminated() {
         assert!(!line[LABEL_WIDTH..].starts_with(' '), "{line}");
     }
     assert_eq!(report.lines().count(), 6, "{report}");
+}
+
+#[test]
+fn the_command_reports_an_unwired_kernel_without_inventing_values() {
+    let mut out = TextBuffer::new();
+
+    stats_command(&UnwiredKernel, UNKNOWN_TICK_PERIOD_MICROSECONDS, &mut out)
+        .expect("the buffer is large enough");
+
+    let report = out.as_str();
+    assert_eq!(value_of(report, "uptime"), UNAVAILABLE);
+    assert_eq!(value_of(report, "heap "), UNAVAILABLE);
+    assert_eq!(value_of(report, "runnable tasks"), "0");
+    assert_eq!(value_of(report, "timer ticks"), "0");
+}
+
+#[test]
+fn the_command_derives_the_uptime_from_the_ticks_it_read() {
+    struct TickingKernel;
+
+    impl KernelReporter for TickingKernel {
+        fn kernel_snapshot(&self) -> KernelSnapshot {
+            let mut counters = Counters::new();
+            for _ in 0..100 {
+                counters.on_timer_tick();
+            }
+
+            KernelSnapshot {
+                memory: MemorySnapshot::new(HEAP_CAPACITY, 2048),
+                runnable_tasks: 2,
+                counters,
+            }
+        }
+    }
+
+    let mut out = TextBuffer::new();
+
+    stats_command(&TickingKernel, 54_925, &mut out).expect("the buffer is large enough");
+
+    let report = out.as_str();
+    assert_eq!(value_of(report, "uptime"), "00:00:05.492");
+    assert_eq!(value_of(report, "timer ticks"), "100");
+    assert_eq!(value_of(report, "runnable tasks"), "2");
+    assert_eq!(value_of(report, "heap free"), "100352 B");
+}
+
+#[test]
+fn a_known_tick_period_with_no_tick_yet_shows_a_zero_uptime() {
+    let mut out = TextBuffer::new();
+
+    stats_command(&UnwiredKernel, 54_925, &mut out).expect("the buffer is large enough");
+
+    assert_eq!(value_of(out.as_str(), "uptime"), "00:00:00.000");
 }
 
 #[test]

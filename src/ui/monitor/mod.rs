@@ -12,7 +12,7 @@
 
 use core::fmt::{self, Write};
 
-use crate::kernel::telemetry::{KernelSnapshot, Uptime};
+use crate::kernel::telemetry::{KernelReporter, KernelSnapshot, Uptime};
 
 /// Text shown in place of a measurement the kernel cannot take yet.
 pub const UNAVAILABLE: &str = "unavailable";
@@ -24,6 +24,31 @@ const LABEL_WIDTH: usize = 18;
 
 /// Parts per thousand in one percent.
 const PERMILLE_PER_PERCENT: u16 = 10;
+
+/// Runs the `stats` command: reads the kernel once, then writes the report.
+///
+/// This is the entry point the shell calls. It takes one snapshot, derives the
+/// uptime from the tick count it contains, and renders the result. Reading the
+/// kernel once keeps every line of the report describing the same instant.
+///
+/// `tick_period_microseconds` is the duration of one timer tick. Pass
+/// [`UNKNOWN_TICK_PERIOD_MICROSECONDS`] while the timer is not calibrated, and
+/// the uptime is reported as unavailable rather than as zero.
+///
+/// [`UNKNOWN_TICK_PERIOD_MICROSECONDS`]: crate::kernel::telemetry::UNKNOWN_TICK_PERIOD_MICROSECONDS
+///
+/// # Errors
+/// Returns the error reported by `out`, as [`render_stats`] does.
+pub fn stats_command<W: Write>(
+    reporter: &dyn KernelReporter,
+    tick_period_microseconds: u64,
+    out: &mut W,
+) -> fmt::Result {
+    let snapshot = reporter.kernel_snapshot();
+    let uptime = Uptime::from_ticks(snapshot.counters.timer_ticks(), tick_period_microseconds);
+
+    render_stats(&snapshot, uptime, out)
+}
 
 /// Writes the `stats` report of `snapshot` into `out`.
 ///
