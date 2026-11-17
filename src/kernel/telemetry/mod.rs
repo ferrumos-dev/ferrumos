@@ -25,6 +25,16 @@
 
 use crate::kernel::memory::MemorySnapshot;
 
+mod unwired;
+
+pub use unwired::UnwiredKernel;
+
+/// Tick period that means the timer is not calibrated yet.
+///
+/// Passing it to [`Uptime::from_ticks`] yields [`None`], so a kernel without a
+/// known tick period reports its uptime as unavailable instead of as zero.
+pub const UNKNOWN_TICK_PERIOD_MICROSECONDS: u64 = 0;
+
 /// Microseconds in one millisecond.
 const MICROSECONDS_PER_MILLISECOND: u64 = 1_000;
 
