@@ -5,7 +5,8 @@
 //! device access belongs in [`crate::drivers`].
 //!
 //! These modules must remain free of unsafe operations and hardware-specific
-//! types. Interfaces will be implemented with their behavioral tests.
+//! types. Their behavioral tests run on the host; boot integration exercises
+//! the same scheduler and executor in the bare-metal image.
 
 #![forbid(unsafe_code)]
 

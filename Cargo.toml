@@ -25,6 +25,9 @@ baremetal = []
 bootloader_api = "=0.11.15"
 font8x8 = { version = "=0.3.1", default-features = false, features = ["unicode"] }
 pc-keyboard = "=0.7.0"
+ferrum_alloc = { path = "libs/ferrum_alloc" }
+spin = { version = "=0.12.3", default-features = false, features = ["mutex", "spin_mutex"] }
+x86_64 = { version = "=0.15.5", default-features = false, features = ["instructions"] }
 
 [[bin]]
 name = "ferrumos"
