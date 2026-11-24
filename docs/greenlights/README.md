@@ -6,6 +6,7 @@ Ce dossier réunit les références de contribution sur l’ordonnancement, les 
 | --- | --- |
 | Obligatoire 1 · difficulté technique et expérimentation | [Ordonnanceur à priorités](./objecitf_obligatoire_1/ordonnancement_a_priorites.md) · [Tas du noyau : veille, prototypes, décision et intégration](./objecitf_obligatoire_1/tas_noyau/README.md) |
 | Obligatoire 2 · architecture et fiabilité | [Note de décision, schémas T02/T04, normes Rust, CI/CD, tests, exploitation et registre](./objecitf_obligatoire_2/README.md) |
+| Complémentaire 1 · ouverture aux contributions extérieures | [Livrables et supports](./objectif_complementaire_1/README.md) |
 
 ## Preuves à réunir
 
