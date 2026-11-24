@@ -1,42 +1,27 @@
-//! Portable kernel snapshots and counters.
+//! Event counters and copied observations for the shell and monitor.
 //!
-//! [`Counters`] accumulates kernel events, [`KernelSnapshot`] gathers them
-//! with the heap view of [`crate::kernel::memory`] and the number of runnable
-//! tasks, and [`KernelReporter`] is the source that produces the snapshot.
-//! [`Uptime`] turns a tick count into a duration for the views.
+//! Timer ticks, cooperative task-function invocations and CPU context switches
+//! describe separate events. Recording one never fabricates another. Counters
+//! saturate at their integer limit, preserving monotonic observations.
 //!
-//! A timer tick and an actual context switch are two distinct events, so they
-//! are counted separately: a kernel that receives ticks without ever switching
-//! task must show it. [`Counters::record_context_switch`] is called after a
-//! commutation that really happened, never after a mere selection. Counters
-//! saturate instead of wrapping, so a long running kernel never reports a
-//! smaller count than before.
+//! The provider captures a snapshot under the synchronization of the underlying
+//! state. Consumers own the resulting copy and can format it after leaving the
+//! critical section. No hardware access or allocator measurement occurs here.
 //!
-//! These types hold no hardware state and take no lock. The implementer of
-//! [`KernelReporter`] captures memory, runnable-task and counter data
-//! coherently inside the synchronization that protects them, then hands the
-//! plain value to consumers in [`crate::ui`], which read it after that
-//! critical section.
+//! [`Uptime`] holds an already converted duration and splits it into the units
+//! a view prints. The conversion from delivered ticks belongs to
+//! [`crate::kernel::interrupts::TickSnapshot`], which keeps the exact rational
+//! timer configuration, so this module never derives time from a tick count.
 //!
 //! Signatures follow `contrats_noyau.md` and the `ferrumos-kernel-core`
 //! reference in `foundation/`.
 
-#![forbid(unsafe_code)]
-
+use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
 
 mod unwired;
 
 pub use unwired::UnwiredKernel;
-
-/// Tick period that means the timer is not calibrated yet.
-///
-/// Passing it to [`Uptime::from_ticks`] yields [`None`], so a kernel without a
-/// known tick period reports its uptime as unavailable instead of as zero.
-pub const UNKNOWN_TICK_PERIOD_MICROSECONDS: u64 = 0;
-
-/// Microseconds in one millisecond.
-const MICROSECONDS_PER_MILLISECOND: u64 = 1_000;
 
 /// Milliseconds in one second.
 const MILLISECONDS_PER_SECOND: u64 = 1_000;
@@ -47,49 +32,64 @@ const SECONDS_PER_MINUTE: u64 = 60;
 /// Minutes in one hour.
 const MINUTES_PER_HOUR: u64 = 60;
 
-/// Saturating counters of kernel events.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+/// Monotonic counts of independently observed kernel events.
+///
+/// These values are counts, not elapsed time or CPU utilization. Mutating a
+/// counter requires exclusive access; shared-state synchronization belongs to
+/// its owner. Once a counter reaches `u64::MAX`, later events keep that value.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Counters {
     timer_ticks: u64,
     context_switches: u64,
+    dispatches: u64,
 }
 
 impl Counters {
-    /// Builds counters that have not recorded any event yet.
-    pub const fn new() -> Self {
-        Self {
-            timer_ticks: 0,
-            context_switches: 0,
-        }
-    }
-
-    /// Records one timer tick.
-    ///
-    /// Called from the timer path, which must stay bounded and non blocking.
-    pub fn on_timer_tick(&mut self) {
-        self.timer_ticks = self.timer_ticks.saturating_add(1);
-    }
-
-    /// Records one context switch that actually happened.
-    ///
-    /// Selecting a task is not switching to it. A selection that leaves the
-    /// running task in place must not be recorded here.
-    pub fn record_context_switch(&mut self) {
-        self.context_switches = self.context_switches.saturating_add(1);
-    }
-
-    /// Timer ticks received since boot.
+    /// Returns the number of timer events delivered to this counter.
     pub const fn timer_ticks(&self) -> u64 {
         self.timer_ticks
     }
 
-    /// Context switches performed since boot.
+    /// Returns the number of actual CPU context switches recorded by the owner.
     pub const fn context_switches(&self) -> u64 {
         self.context_switches
     }
+
+    /// Returns the number of cooperative task-function invocations recorded.
+    pub const fn dispatches(&self) -> u64 {
+        self.dispatches
+    }
+
+    /// Records a completed CPU context switch, saturating at `u64::MAX`.
+    ///
+    /// The context-switch mechanism calls this after an actual switch. A policy
+    /// selecting an identifier or an executor invoking a function is separate.
+    pub fn record_context_switch(&mut self) {
+        self.context_switches = self.context_switches.saturating_add(1);
+    }
+
+    /// Records one cooperative task-function invocation, saturating at the limit.
+    ///
+    /// The dispatcher calls this once when invoking the selected task function.
+    /// Selecting an identifier alone does not count as an invocation or a CPU
+    /// context switch.
+    pub fn record_dispatch(&mut self) {
+        self.dispatches = self.dispatches.saturating_add(1);
+    }
 }
 
-/// Time elapsed since boot, in milliseconds.
+impl TimerTickSink for Counters {
+    fn on_timer_tick(&mut self) {
+        self.timer_ticks = self.timer_ticks.saturating_add(1);
+    }
+}
+
+/// Elapsed time since boot, held in whole milliseconds for display.
+///
+/// This type carries a duration that a provider already converted, and splits
+/// it into readable units. It performs no tick arithmetic of its own: a caller
+/// holding the timer configuration obtains the milliseconds from
+/// [`crate::kernel::interrupts::TickSnapshot::uptime_millis`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Uptime {
     milliseconds: u64,
@@ -99,22 +99,6 @@ impl Uptime {
     /// Builds an uptime from a duration already expressed in milliseconds.
     pub const fn from_milliseconds(milliseconds: u64) -> Self {
         Self { milliseconds }
-    }
-
-    /// Converts a tick count into an uptime.
-    ///
-    /// Returns [`None`] when `tick_period_microseconds` is zero, because the
-    /// tick period is then unknown and no duration can be derived. That
-    /// absence is expected while the timer is not calibrated, and it stays
-    /// distinct from a zero duration.
-    pub const fn from_ticks(ticks: u64, tick_period_microseconds: u64) -> Option<Self> {
-        if tick_period_microseconds == 0 {
-            return None;
-        }
-        let microseconds = ticks.saturating_mul(tick_period_microseconds);
-        Some(Self {
-            milliseconds: microseconds / MICROSECONDS_PER_MILLISECOND,
-        })
     }
 
     /// Whole milliseconds elapsed since boot.
@@ -152,26 +136,25 @@ pub struct UptimeParts {
     pub milliseconds: u64,
 }
 
-/// Coherent view of the kernel at a single instant.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Copied kernel state captured by a provider under its synchronization.
+///
+/// The fields describe the same logical observation. A struct literal cannot
+/// enforce that guarantee, so its provider owns coherent capture across the
+/// allocator, ready set and counters. Copying this value preserves the sample
+/// while the live state continues changing.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct KernelSnapshot {
-    /// Heap view, or [`None`] when no coherent measurement is available.
+    /// Sampled heap capacity and usage in bytes, or `None` when unavailable.
     pub memory: Option<MemorySnapshot>,
-    /// Tasks ready to run at the time of the snapshot.
+    /// Number of tasks in the provider's ready set at capture time.
     pub runnable_tasks: usize,
-    /// Event counters at the time of the snapshot.
+    /// Event counts captured with the ready set and memory sample.
     pub counters: Counters,
 }
 
-/// Source of kernel snapshots.
-///
-/// The implementer owns the synchronization: it serializes the shared accesses
-/// and captures memory, runnable tasks and counters in one coherent reading.
+/// Supplies copied observations without exposing mutable kernel internals.
 pub trait KernelReporter {
-    /// Current snapshot of the kernel.
-    ///
-    /// The snapshot always exists; a measurement that could not be taken is
-    /// carried as [`None`] rather than as zero.
+    /// Captures one coherent observation using the provider's synchronization.
     fn kernel_snapshot(&self) -> KernelSnapshot;
 }
 

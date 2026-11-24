@@ -2,54 +2,43 @@ use super::*;
 
 const HEAP_CAPACITY: u64 = 100 * 1024;
 
+/// T01 of the test matrix: a usage greater than the capacity is rejected
+/// instead of producing a snapshot that would underflow.
 #[test]
-fn a_snapshot_keeps_the_capacity_and_the_usage_it_was_given() {
-    let snapshot = MemorySnapshot::new(HEAP_CAPACITY, 41_984).expect("coherent values");
+fn rejects_usage_above_capacity_without_overflow() {
+    for (capacity, used) in [(0, 1), (16, 17), (u64::MAX - 1, u64::MAX)] {
+        assert_eq!(MemorySnapshot::new(capacity, used), None);
+    }
+}
 
-    assert_eq!(snapshot.heap_capacity_bytes(), HEAP_CAPACITY);
-    assert_eq!(snapshot.heap_used_bytes(), 41_984);
+/// T02 of the test matrix: `(16, 6)` leaves 10 free and `(0, 0)` leaves 0.
+#[test]
+fn preserves_units_and_computes_free_bytes_at_boundaries() {
+    for (capacity, used, free) in [
+        (0, 0, 0),
+        (16, 6, 10),
+        (16, 16, 0),
+        (u64::MAX, 0, u64::MAX),
+        (u64::MAX, u64::MAX, 0),
+    ] {
+        let snapshot = MemorySnapshot::new(capacity, used).unwrap();
+        assert_eq!(snapshot.heap_capacity_bytes(), capacity);
+        assert_eq!(snapshot.heap_used_bytes(), used);
+        assert_eq!(snapshot.heap_free_bytes(), free);
+    }
 }
 
 #[test]
-fn free_bytes_complements_used_bytes() {
-    let snapshot = MemorySnapshot::new(HEAP_CAPACITY, 41_984).expect("coherent values");
-
-    assert_eq!(snapshot.heap_free_bytes(), HEAP_CAPACITY - 41_984);
-    assert_eq!(
-        snapshot.heap_free_bytes() + snapshot.heap_used_bytes(),
-        snapshot.heap_capacity_bytes()
-    );
-}
-
-/// T02 of the test matrix: `(16, 6)` gives 10 and `(0, 0)` gives 0.
-#[test]
-fn t02_free_space_is_the_difference_between_capacity_and_usage() {
-    let measured = MemorySnapshot::new(16, 6).expect("coherent values");
-    let empty = MemorySnapshot::new(0, 0).expect("an empty heap is coherent");
-
-    assert_eq!(measured.heap_free_bytes(), 10);
-    assert_eq!(empty.heap_free_bytes(), 0);
-    assert_eq!(empty.heap_capacity_bytes(), 0);
-}
-
-#[test]
-fn a_full_heap_leaves_nothing_free() {
+fn a_full_heap_reports_a_complete_usage_share() {
     let snapshot = MemorySnapshot::new(HEAP_CAPACITY, HEAP_CAPACITY).expect("coherent values");
 
     assert_eq!(snapshot.heap_free_bytes(), 0);
     assert_eq!(snapshot.usage_permille(), Some(1000));
 }
 
-/// T01 of the test matrix: a usage of 17 for a capacity of 16 is rejected.
-#[test]
-fn t01_a_usage_greater_than_the_capacity_produces_no_snapshot() {
-    assert_eq!(MemorySnapshot::new(16, 17), None);
-    assert_eq!(MemorySnapshot::new(1024, 2048), None);
-}
-
 #[test]
 fn usage_share_is_unavailable_without_capacity() {
-    let snapshot = MemorySnapshot::new(0, 0).expect("coherent values");
+    let snapshot = MemorySnapshot::new(0, 0).expect("an empty heap is coherent");
 
     assert_eq!(snapshot.usage_permille(), None);
 }

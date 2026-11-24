@@ -20,7 +20,7 @@ impl KernelReporter for UnwiredKernel {
         KernelSnapshot {
             memory: None,
             runnable_tasks: 0,
-            counters: Counters::new(),
+            counters: Counters::default(),
         }
     }
 }

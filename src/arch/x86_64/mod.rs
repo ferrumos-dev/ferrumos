@@ -1,7 +1,8 @@
 //! x86_64 mechanisms and integration points for the FerrumOS kernel.
 //!
-//! Port I/O and CPU interrupt masking support the polled boot console. Memory
-//! management, interrupt handlers and context switching remain separate tasks.
+//! Port I/O and CPU interrupt guards support the boot devices and heap lock.
+//! Validated physical frames back the mapped kernel heap. IDT and PIC/PIT setup
+//! deliver periodic timer observations; CPU context switching remains separate.
 //! Unsafe operations document their preconditions and stay behind interfaces
 //! with explicit ownership and synchronization.
 

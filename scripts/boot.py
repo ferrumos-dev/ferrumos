@@ -20,7 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 BOOT = ROOT / "target" / "boot"
 IMAGE = BOOT / "ferrumos-bios.img"
 RESULTS = BOOT / "results"
-MARKERS = ("FERRUMOS_BOOT_OK", "DISPLAY_READY", "KEYBOARD_READY")
+MARKERS = ("FERRUMOS_BOOT_OK", "MEMORY_MAP_READY", "HEAP_READY", "HEAP_ALLOC_FREE_OK",
+           "DISPLAY_READY", "KEYBOARD_READY", "TIMER_READY", "HEAP_IRQ_SAFE_OK",
+           "INPUT_TASK_READY", "KERNEL_PRIORITY_OK")
 ACK = "INPUT_LINE: test"
 
 
@@ -124,12 +126,71 @@ def wait_for_serial(process: subprocess.Popen, path: Path, expected: tuple[str, 
         ensure_running(process)
         text = path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
         lines = text.splitlines()
-        if any("PANIC" in line or "BOOT_FAILED" in line for line in lines):
+        if any("PANIC" in line or "BOOT_FAILED" in line or "CPU_EXCEPTION" in line for line in lines):
             raise BootError("kernel reported a panic or boot failure")
         if all(marker in lines for marker in expected):
             return text
         time.sleep(0.05)
     raise BootError(f"timed out waiting for serial lines: {', '.join(expected)}")
+
+
+def verify_memory_summary(text: str) -> dict[str, int]:
+    """Check the boot-time usable map summary for the 128 MiB test machine."""
+    match = re.search(r"^MEMORY_USABLE bytes=(\d+) frames=(\d+)$", text, re.MULTILINE)
+    if match is None:
+        raise BootError("missing physical memory summary")
+    usable, frames = map(int, match.groups())
+    if not 0 < frames * 4096 <= usable <= 128 * 1024 * 1024:
+        raise BootError("invalid physical memory summary for the QEMU test machine")
+    return {"usable_bytes": usable, "usable_frames": frames}
+
+
+def verify_heap_summary(text: str) -> dict[str, int]:
+    """Require a real heap sample after allocate, write, free, reuse and OOM checks."""
+    match = re.search(r"^HEAP_SAMPLE capacity=(\d+) used=(\d+) free=(\d+)$", text, re.MULTILINE)
+    if match is None:
+        raise BootError("missing heap sample")
+    capacity, used, free = map(int, match.groups())
+    if capacity != 1024 * 1024 or used != 0 or free != capacity:
+        raise BootError("heap sample did not recover its full capacity")
+    return {"capacity_bytes": capacity, "used_bytes": used, "free_bytes": free}
+
+
+def timer_samples(text: str) -> list[dict[str, int]]:
+    """Read immutable snapshots; the kernel emits at most two during boot."""
+    return [{"ticks": int(ticks), "uptime_ms": int(milliseconds)}
+            for ticks, milliseconds in re.findall(r"^TIMER_SAMPLE ticks=(\d+) uptime_ms=(\d+)$",
+                                                   text, re.MULTILINE)]
+
+
+def verify_timer_samples(samples: list[dict[str, int]]) -> None:
+    """Check repeated IRQ delivery and the documented PIT rational conversion."""
+    if len(samples) != 2:
+        raise BootError("expected two periodic timer samples")
+    previous = {"ticks": 0, "uptime_ms": 0}
+    for sample in samples:
+        # The PIT base and programmed divisor define uptime. Host wall time
+        # is deliberately excluded because TCG may run at a different speed.
+        expected_ms = min(sample["ticks"] * 11932 * 1000 // 1193182, (1 << 64) - 1)
+        if (sample["ticks"] <= previous["ticks"] or sample["uptime_ms"] <= previous["uptime_ms"]
+                or sample["uptime_ms"] != expected_ms):
+            raise BootError("timer samples are not increasing with the PIT period")
+        previous = sample
+
+
+def wait_for_timer(process: subprocess.Popen, serial: Path, deadline: float) -> list[dict[str, int]]:
+    """Require two distinct interrupts; one IRQ cannot establish a working EOI path."""
+    while time.monotonic() < deadline:
+        ensure_running(process)
+        text = serial.read_text(encoding="utf-8", errors="replace") if serial.exists() else ""
+        if "PANIC" in text or "BOOT_FAILED" in text or "CPU_EXCEPTION" in text:
+            raise BootError("kernel failed while waiting for periodic timer interrupts")
+        samples = timer_samples(text)
+        if len(samples) >= 2:
+            verify_timer_samples(samples)
+            return samples
+        time.sleep(0.02)
+    raise BootError("timed out waiting for periodic timer interrupts")
 
 
 class Qmp:
@@ -257,7 +318,10 @@ def smoke_test(image: Path, executable: str, timeout: float) -> None:
                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
             connection = connect_qmp(process, port, deadline)
             qmp = Qmp(connection, deadline)
-            wait_for_serial(process, serial, MARKERS, deadline)
+            boot_text = wait_for_serial(process, serial, MARKERS, deadline)
+            summary["physical_memory"] = verify_memory_summary(boot_text)
+            summary["heap"] = verify_heap_summary(boot_text)
+            summary["timer"] = wait_for_timer(process, serial, deadline)
             for key in ("t", "e", "s", "x", "backspace", "t", "ret"):
                 qmp.execute("send-key", {"keys": [{"type": "qcode", "data": key}], "hold-time": 50})
                 time.sleep(0.08)
@@ -282,7 +346,7 @@ def smoke_test(image: Path, executable: str, timeout: float) -> None:
             summary["qemu_exit_code"] = process.returncode
         summary["duration_seconds"] = round(time.monotonic() - started, 3)
         summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-    print(f"PASS: boot, framebuffer and PS/2 keyboard; diagnostics: {RESULTS}")
+    print(f"PASS: heap allocation/free, periodic timer, framebuffer and PS/2 keyboard; diagnostics: {RESULTS}")
 
 
 def main() -> int:

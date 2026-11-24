@@ -1,12 +1,20 @@
 use super::*;
 
+use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
-use crate::kernel::telemetry::{
-    Counters, KernelReporter, UnwiredKernel, UNKNOWN_TICK_PERIOD_MICROSECONDS,
-};
+use crate::kernel::telemetry::{Counters, KernelReporter, UnwiredKernel};
 
 const BUFFER_LEN: usize = 512;
 const HEAP_CAPACITY: u64 = 100 * 1024;
+
+/// Input frequency of the legacy timer, as configured by the architecture layer.
+const TIMER_INPUT_HZ: u32 = 1_193_182;
+
+/// Divisor programmed on that timer, giving close to one tick every 10 ms.
+const TIMER_DIVISOR: u16 = 11_932;
+
+/// Timer configuration of a kernel whose timer is not programmed yet.
+const UNCONFIGURED_TIMER: (u32, u16) = (0, 0);
 
 struct TextBuffer {
     bytes: [u8; BUFFER_LEN],
@@ -39,9 +47,11 @@ impl Write for TextBuffer {
 }
 
 fn measured_snapshot() -> KernelSnapshot {
-    let mut counters = Counters::new();
+    let mut counters = Counters::default();
     counters.on_timer_tick();
     counters.record_context_switch();
+    counters.record_dispatch();
+    counters.record_dispatch();
 
     KernelSnapshot {
         memory: MemorySnapshot::new(HEAP_CAPACITY, 41_984),
@@ -54,7 +64,7 @@ fn empty_snapshot() -> KernelSnapshot {
     KernelSnapshot {
         memory: None,
         runnable_tasks: 0,
-        counters: Counters::new(),
+        counters: Counters::default(),
     }
 }
 
@@ -90,6 +100,7 @@ fn a_measured_snapshot_reports_real_values() {
     assert_eq!(value_of(report, "runnable tasks"), "4");
     assert_eq!(value_of(report, "timer ticks"), "1");
     assert_eq!(value_of(report, "context switches"), "1");
+    assert_eq!(value_of(report, "dispatches"), "2");
 }
 
 #[test]
@@ -115,6 +126,7 @@ fn an_idle_counter_is_not_rendered_as_unavailable() {
     assert_eq!(value_of(report, "runnable tasks"), "0");
     assert_eq!(value_of(report, "timer ticks"), "0");
     assert_eq!(value_of(report, "context switches"), "0");
+    assert_eq!(value_of(report, "dispatches"), "0");
 }
 
 #[test]
@@ -136,7 +148,7 @@ fn an_empty_heap_is_reported_as_measured() {
     let snapshot = KernelSnapshot {
         memory: MemorySnapshot::new(0, 0),
         runnable_tasks: 0,
-        counters: Counters::new(),
+        counters: Counters::default(),
     };
 
     render(&snapshot, None, &mut out);
@@ -163,15 +175,15 @@ fn every_line_is_labelled_and_terminated() {
         assert!(!line.starts_with(' '), "{line}");
         assert!(!line[LABEL_WIDTH..].starts_with(' '), "{line}");
     }
-    assert_eq!(report.lines().count(), 6, "{report}");
+    assert_eq!(report.lines().count(), 7, "{report}");
 }
 
 #[test]
 fn the_command_reports_an_unwired_kernel_without_inventing_values() {
     let mut out = TextBuffer::new();
+    let (input_hz, divisor) = UNCONFIGURED_TIMER;
 
-    stats_command(&UnwiredKernel, UNKNOWN_TICK_PERIOD_MICROSECONDS, &mut out)
-        .expect("the buffer is large enough");
+    stats_command(&UnwiredKernel, input_hz, divisor, &mut out).expect("the buffer is large enough");
 
     let report = out.as_str();
     assert_eq!(value_of(report, "uptime"), UNAVAILABLE);
@@ -186,7 +198,7 @@ fn the_command_derives_the_uptime_from_the_ticks_it_read() {
 
     impl KernelReporter for TickingKernel {
         fn kernel_snapshot(&self) -> KernelSnapshot {
-            let mut counters = Counters::new();
+            let mut counters = Counters::default();
             for _ in 0..100 {
                 counters.on_timer_tick();
             }
@@ -201,20 +213,22 @@ fn the_command_derives_the_uptime_from_the_ticks_it_read() {
 
     let mut out = TextBuffer::new();
 
-    stats_command(&TickingKernel, 54_925, &mut out).expect("the buffer is large enough");
+    stats_command(&TickingKernel, TIMER_INPUT_HZ, TIMER_DIVISOR, &mut out)
+        .expect("the buffer is large enough");
 
     let report = out.as_str();
-    assert_eq!(value_of(report, "uptime"), "00:00:05.492");
+    assert_eq!(value_of(report, "uptime"), "00:00:01.000");
     assert_eq!(value_of(report, "timer ticks"), "100");
     assert_eq!(value_of(report, "runnable tasks"), "2");
     assert_eq!(value_of(report, "heap free"), "100352 B");
 }
 
 #[test]
-fn a_known_tick_period_with_no_tick_yet_shows_a_zero_uptime() {
+fn a_configured_timer_with_no_tick_yet_shows_a_zero_uptime() {
     let mut out = TextBuffer::new();
 
-    stats_command(&UnwiredKernel, 54_925, &mut out).expect("the buffer is large enough");
+    stats_command(&UnwiredKernel, TIMER_INPUT_HZ, TIMER_DIVISOR, &mut out)
+        .expect("the buffer is large enough");
 
     assert_eq!(value_of(out.as_str(), "uptime"), "00:00:00.000");
 }

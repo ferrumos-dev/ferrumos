@@ -7,8 +7,10 @@ un exécutable de démarrage et un répertoire `src/` à la racine. Les configur
 de compilation et la chaîne Rust se trouvent également à la racine.
 
 Le démarrage BIOS, l'affichage framebuffer, les diagnostics série et la saisie
-clavier sont implémentés dans ces modules. Les autres couches restent des points
-d'intégration. La console édite et reproduit les lignes sans exécuter de commandes.
+clavier utilisent ces modules. Le démarrage mappe un tas réutilisable puis installe
+l'IDT et le timer PIT. La boucle de démarrage confie la saisie à une tâche
+coopérative de priorité haute. Une tâche de diagnostic de priorité normale termine
+après son premier passage. La console édite et reproduit les lignes.
 L'espace utilisateur, les appels système et l'isolation restent à concevoir et à
 valider. Le [guide de démarrage](./boot.md) précise la configuration testée.
 
@@ -28,7 +30,9 @@ src/
 │       ├── cpu.rs
 │       ├── io.rs
 │       ├── memory.rs
-│       └── interrupts.rs
+│       ├── memory/       frames.rs, paging.rs et heap.rs
+│       ├── interrupts.rs
+│       └── interrupts/   hardware.rs et entry.S
 ├── kernel/
 │   ├── mod.rs
 │   ├── memory/mod.rs
@@ -57,13 +61,13 @@ src/
 
 | Couche | Responsabilité actuelle ou à développer |
 | --- | --- |
-| `main.rs`, `boot` | Recevoir le `BootInfo` de `bootloader_api 0.11.15`, initialiser COM1, le framebuffer puis PS/2, et exécuter la boucle de saisie. Le point d'entrée inclut le traitement terminal des paniques. |
-| `arch/x86_64` | Encapsuler actuellement les ports d'E/S, la désactivation des interruptions et l'arrêt du CPU. Les tables CPU, contextes, tables de pages et handlers IRQ restent à intégrer. |
-| `kernel/memory` | Définir les contrats et les relevés mémoire cohérents, avec des valeurs en octets et une absence explicite de mesure. |
-| `kernel/interrupts` | Définir les événements et le contrat portable de réception des ticks. |
-| `kernel/scheduler` | Sélectionner les tâches prêtes selon une politique documentée, avec des cas limites et erreurs explicites. |
-| `kernel/executor` | Gérer les états et la durée de vie des tâches ; demander les bascules de contexte aux mécanismes matériels. |
-| `kernel/telemetry` | Définir les compteurs et assembler les relevés destinés aux consommateurs du noyau. |
+| `main.rs`, `boot` | Demander au bootloader le mapping physique, recevoir le `BootInfo`, initialiser COM1, le tas, le framebuffer, PS/2 et le timer, puis exécuter les tâches coopératives. Le point d'entrée inclut le traitement terminal des paniques. |
+| `arch/x86_64` | Valider les régions physiques, attribuer leurs frames entières de 4 Kio et mapper le tas. Protéger l'allocateur, installer l'IDT et le PIC/PIT, acquitter IRQ0, préserver le drapeau IF dans les sections critiques et attendre une interruption avec `sti; hlt`. |
+| `kernel/memory` | `MemorySnapshot` valide une capacité et une utilisation en octets. `MemoryReporter` fournit un relevé cohérent ou `None` quand il est indisponible. |
+| `kernel/interrupts` | `TimerTickSink` décrit la réception d'un événement. `TickSnapshot` convertit une observation et la fréquence rationnelle du timer en durée entière. |
+| `kernel/scheduler` | `PriorityScheduler<N>` choisit `High`, puis `Normal`, puis `Low`. À priorité égale, l'ordre FIFO évolue sur cession ou réveil. Les doublons et dépassements de capacité sont refusés sans mutation. |
+| `kernel/executor` | `CooperativeExecutor<C, N>` conserve les fonctions et leur état. Un pas rend `Yield`, `Blocked` ou `Complete`. L'appel emprunte le contexte et utilise la pile du CPU appelant. |
+| `kernel/telemetry` | Compter les appels effectifs aux tâches, les ticks déclarés et les bascules CPU déclarées séparément. `KernelSnapshot` fournit un relevé copié, capturé sous la synchronisation du fournisseur. |
 | `drivers/serial`, `display`, `input`, `console.rs` | Piloter COM1 et PS/2, rendre le texte dans le framebuffer et conserver une ligne UTF-8 de capacité fixe. Les opérations matérielles restent hors des tests hôte. |
 | `drivers/storage`, `network` | Réserver les pilotes de stockage par blocs et de carte réseau. |
 | `services` | Construire les fonctionnalités de fichiers et de réseau à partir des interfaces du noyau et des pilotes. |
@@ -83,10 +87,12 @@ portables restent testables sur l'hôte. Le constructeur du clavier et celui du
 port série exigent un propriétaire exclusif. Le framebuffer est emprunté de façon
 mutable depuis le `BootInfo`, sans singleton global.
 
-La boucle de démarrage conserve les interruptions masquables désactivées et lit
-le clavier par scrutation. Elle n'installe ni timer ni ordonnanceur : cette étape
-sera raccordée par le pôle noyau. Les détails de cette transition figurent dans
-les [interfaces de reprise](./boot.md#interfaces-pour-la-suite-du-projet).
+Le démarrage conserve IF à zéro pendant l'initialisation des ressources partagées.
+Il installe ensuite l'IDT, reprogramme les PIC et le PIT, démasque uniquement IRQ0,
+puis active les interruptions. Le handler timer incrémente un compteur atomique
+saturant et acquitte le PIC maître. Il garde l'allocation, les verrous et l'affichage
+dans l'exécution normale. Le clavier reste scruté par la tâche de saisie. Après chaque
+tour coopératif, `sti; hlt` attend le prochain réveil matériel.
 
 Les composants appartiennent aujourd'hui à une même bibliothèque. La séparation
 en modules organise les responsabilités ; elle ne constitue ni une frontière de
@@ -125,8 +131,64 @@ ci-dessous reprend ses responsabilités avec les chemins du projet actuel.
 | Shell et monitoring | `src/ui/shell/` et `src/ui/monitor/` |
 
 Les [contrats archivés](./greenlights/objecitf_obligatoire_2/md/contrats_noyau.md)
-et leurs résultats restent des références pour les prochaines implémentations.
-Leurs huit tests ne constituent pas des tests exécutés sur le noyau courant.
+servent de référence pour les unités mémoire et les observations. Les modules
+de `src/kernel/` possèdent leurs tests dans le paquet racine. La politique du
+noyau commun utilise des priorités fixes.
+
+## Cycle d'une tâche coopérative
+
+L'exécuteur enregistre la tâche avec un identifiant, une priorité et une fonction
+`fn(&mut C) -> TaskStatus`. Il choisit un identifiant prêt et appelle la fonction.
+`Yield` conserve la tâche en fin de file de sa priorité. `Blocked` retire la tâche
+de la file prête et conserve sa fonction. `wake` la réinscrit en fin de file.
+`Complete` libère l'identifiant et l'emplacement du registre.
+
+Une fonction doit rendre la main après un travail borné. Une tâche haute qui
+reste prête peut retarder les priorités basses. La boucle de démarrage réveille
+la tâche clavier à chaque tour de scrutation et borne le nombre de dispatchs du
+tour. Le timer réveille le CPU entre les tours. Chaque appel incrémente
+`dispatches`, tandis que les compteurs de ticks et de bascules CPU gardent leur
+sens propre.
+
+Les régions mémoire physiques proviennent du `BootInfo`. Le résumé de démarrage
+compte leur capacité initiale après validation des bornes et des recouvrements.
+Le curseur de frames attribue chaque page utilisable entière une fois pendant
+l'initialisation du tas. `OffsetPageTable` accède aux tables actives via CR3 et le
+mapping physique fourni par le bootloader. Le tas réserve 1 Mio à l'adresse
+virtuelle `0x4444_4444_0000`, avec des pages présentes, inscriptibles et non
+exécutables. Un échec partiel conserve les frames et mappings déjà attribués et
+interdit une seconde initialisation jusqu'au redémarrage.
+
+Toute extension de l'allocation physique doit préserver la propriété des frames
+déjà consommées par le tas et ses nouvelles tables de pages. Elle doit reprendre
+leur état d'attribution ou les exclure explicitement de son pool. Le résumé
+`BootMemorySummary` demeure une capacité initiale de la carte bootloader, et le
+relevé du tas décrit uniquement sa région de 1 Mio. Une mesure de RAM physique
+libre courante exigera le suivi complet de ces attributions.
+
+## Consommer le tas et l'horloge
+
+`arch::x86_64::memory::heap()` fournit le tas partagé après son initialisation.
+`KernelHeap::allocate(Layout)` rend un `HeapBlock` dont les octets sont initialisés
+à zéro. `as_mut_slice()` exige un emprunt mutable du handle. `Drop` restitue le
+pointeur et le layout d'origine à `ferrum_alloc::LinkedListHeap`. Plusieurs handles
+peuvent vivre simultanément. Chaque verrou du tas désactive temporairement les
+interruptions et restaure le drapeau IF de l'appelant.
+
+`MemoryReporter::memory_snapshot()` capture capacité, utilisation et espace libre
+sous ce verrou. L'utilisation inclut l'arrondi de l'allocateur et l'alignement.
+`KernelHeap::stats()` rend `Option<HeapStats>`, dont `live_bytes` donne séparément
+les tailles demandées encore vivantes. Capturer les valeurs, libérer le verrou,
+puis formater le relevé.
+Le résumé physique initial et le relevé du tas conservent leurs unités et leur
+périmètre respectifs.
+
+`arch::x86_64::interrupts::clock_snapshot()` capture le nombre de ticks livrés et
+la configuration du PIT dans un `TickSnapshot`. La fréquence vaut exactement
+`1_193_182 / 11_932` Hz, proche de 100 Hz. `uptime_millis()` utilise cette fraction
+et arrondit vers le bas. Une longue période avec IF à zéro peut perdre des
+événements matériels. Le compteur représente donc une durée issue du timer,
+avec les contraintes de livraison de ses IRQ.
 
 ## Compilation et intégration progressive
 
