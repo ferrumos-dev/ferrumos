@@ -13,3 +13,10 @@ date,commit,branch,status,record,iterations,errors,used_before,used_after,cycles
 2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp4_page_cycle,500,0,0,0,186805420
 2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp5_under_interrupts,10200,0,0,0,1076733644
 2026-11-16T20:48:08+00:00,187d5ac,main,passed,exp6_phase_change,100,0,0,0,129458
+2026-11-24T20:33:04+00:00,40e1cc7,main,passed,box_alloc_64B,1,0,0,64,172432
+2026-11-24T20:33:04+00:00,40e1cc7,main,passed,exp1_alloc_free_sequence,10000,0,0,0,672028656
+2026-11-24T20:33:04+00:00,40e1cc7,main,passed,exp2_long_lived_vs_churn,10000,0,0,256,119295150
+2026-11-24T20:33:04+00:00,40e1cc7,main,passed,exp3_exhaustion_and_recovery,3,0,0,0,212905004
+2026-11-24T20:33:04+00:00,40e1cc7,main,passed,exp4_page_cycle,500,0,0,0,155070058
+2026-11-24T20:33:04+00:00,40e1cc7,main,passed,exp5_under_interrupts,10200,0,0,0,885733758
+2026-11-24T20:33:04+00:00,40e1cc7,main,passed,exp6_phase_change,100,0,0,0,112164
