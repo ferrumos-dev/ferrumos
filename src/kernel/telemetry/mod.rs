@@ -7,6 +7,8 @@
 //! The provider captures a snapshot under the synchronization of the underlying
 //! state. Consumers own the resulting copy and can format it after leaving the
 //! critical section. No hardware access or allocator measurement occurs here.
+//! On the integrated kernel, the provider copies the hardware clock's total into
+//! the sample with [`Counters::with_timer_ticks`].
 
 use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
@@ -24,7 +26,19 @@ pub struct Counters {
 }
 
 impl Counters {
-    /// Returns the number of timer events delivered to this counter.
+    /// Returns a copy with the total from an already captured timer reading.
+    ///
+    /// The reading replaces the previous tick count and preserves dispatches
+    /// and context switches. Use a fresh reading for each kernel snapshot.
+    #[must_use]
+    pub const fn with_timer_ticks(self, timer_ticks: u64) -> Self {
+        Self {
+            timer_ticks,
+            ..self
+        }
+    }
+
+    /// Returns the number of timer events represented by this sample.
     pub const fn timer_ticks(&self) -> u64 {
         self.timer_ticks
     }

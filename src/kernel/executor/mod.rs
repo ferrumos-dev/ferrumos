@@ -174,6 +174,9 @@ impl<C, const N: usize> CooperativeExecutor<C, N> {
     }
 
     /// Copy the executor's counters while the owner holds its shared borrow.
+    ///
+    /// These counters cover execution only. A kernel reporter can include the
+    /// captured hardware clock total with [`Counters::with_timer_ticks`].
     pub fn counters(&self) -> Counters {
         self.counters
     }

@@ -27,6 +27,21 @@ fn records_each_event_kind_independently() {
 }
 
 #[test]
+fn imported_tick_reading_replaces_ticks_and_preserves_execution_counts() {
+    let mut recorded = Counters::default();
+    recorded.on_timer_tick();
+    recorded.record_dispatch();
+    recorded.record_context_switch();
+
+    let sampled = recorded.with_timer_ticks(250);
+    assert_eq!(sampled.timer_ticks(), 250);
+    assert_eq!(sampled.dispatches(), 1);
+    assert_eq!(sampled.context_switches(), 1);
+    assert_eq!(recorded.timer_ticks(), 1);
+    assert_eq!(sampled.with_timer_ticks(u64::MAX).timer_ticks(), u64::MAX);
+}
+
+#[test]
 fn counters_reach_the_limit_and_saturate_independently() {
     let mut counters = Counters {
         timer_ticks: u64::MAX - 1,

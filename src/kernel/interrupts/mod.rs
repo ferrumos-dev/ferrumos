@@ -1,13 +1,16 @@
 //! Portable boundary for timer events delivered to kernel policy.
 //!
 //! The architecture adapter owns timer configuration, interrupt-table setup,
-//! masks and controller acknowledgement. It delivers an event only after it
-//! has established the handler's ownership and synchronization rules.
+//! masks and controller acknowledgement. The integrated x86_64 kernel records
+//! delivered interrupts in its hardware clock and reads them as a [`TickSnapshot`].
 //!
 //! A tick is an event count. Converting it to time requires the configured
 //! timer frequency, and executing a task requires the separate executor.
 
 /// Receives one timer tick without exposing hardware-specific types.
+///
+/// This interface supports consumers that receive events directly, including
+/// simulations. Hardware clock readers consume an already captured total.
 ///
 /// A sink called directly from an interrupt handler must perform bounded,
 /// non-blocking work. Its caller owns serialization, ordering and reentrancy.

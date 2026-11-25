@@ -64,10 +64,10 @@ src/
 | `main.rs`, `boot` | Demander au bootloader le mapping physique, recevoir le `BootInfo`, initialiser COM1, le tas, le framebuffer, PS/2 et le timer, puis exécuter les tâches coopératives. Le point d'entrée inclut le traitement terminal des paniques. |
 | `arch/x86_64` | Valider les régions physiques, attribuer leurs frames entières de 4 Kio et mapper le tas. Protéger l'allocateur, installer l'IDT et le PIC/PIT, acquitter IRQ0, préserver le drapeau IF dans les sections critiques et attendre une interruption avec `sti; hlt`. |
 | `kernel/memory` | `MemorySnapshot` valide une capacité et une utilisation en octets. `MemoryReporter` fournit un relevé cohérent ou `None` quand il est indisponible. |
-| `kernel/interrupts` | `TimerTickSink` décrit la réception d'un événement. `TickSnapshot` convertit une observation et la fréquence rationnelle du timer en durée entière. |
+| `kernel/interrupts` | `TimerTickSink` décrit la réception directe d'événements, notamment en simulation. `TickSnapshot` convertit un relevé et la fréquence rationnelle du timer en durée entière. |
 | `kernel/scheduler` | `PriorityScheduler<N>` choisit `High`, puis `Normal`, puis `Low`. À priorité égale, l'ordre FIFO évolue sur cession ou réveil. Les doublons et dépassements de capacité sont refusés sans mutation. |
 | `kernel/executor` | `CooperativeExecutor<C, N>` conserve les fonctions et leur état. Un pas rend `Yield`, `Blocked` ou `Complete`. L'appel emprunte le contexte et utilise la pile du CPU appelant. |
-| `kernel/telemetry` | Compter les appels effectifs aux tâches, les ticks déclarés et les bascules CPU déclarées séparément. `KernelSnapshot` fournit un relevé copié, capturé sous la synchronisation du fournisseur. |
+| `kernel/telemetry` | Conserver des comptes distincts pour les appels aux tâches, les interruptions timer livrées et les bascules CPU. Le fournisseur de `KernelSnapshot` assemble un relevé copié. |
 | `drivers/serial`, `display`, `input`, `console.rs` | Piloter COM1 et PS/2, rendre le texte dans le framebuffer et conserver une ligne UTF-8 de capacité fixe. Les opérations matérielles restent hors des tests hôte. |
 | `drivers/storage`, `network` | Réserver les pilotes de stockage par blocs et de carte réseau. |
 | `services` | Construire les fonctionnalités de fichiers et de réseau à partir des interfaces du noyau et des pilotes. |
@@ -189,6 +189,16 @@ la configuration du PIT dans un `TickSnapshot`. La fréquence vaut exactement
 et arrondit vers le bas. Une longue période avec IF à zéro peut perdre des
 événements matériels. Le compteur représente donc une durée issue du timer,
 avec les contraintes de livraison de ses IRQ.
+
+Le compteur atomique du handler IRQ0, accessible par `tick_count()`, est la
+source unique des ticks du noyau intégré. Pour `stats`, le fournisseur lit
+`clock_snapshot()` une fois, puis construit les compteurs du `KernelSnapshot`
+avec `executor.counters().with_timer_ticks(clock.ticks())`. Cette opération
+copie le total observé et préserve les compteurs d'exécution. Le fournisseur
+capture les données sous sa synchronisation, puis le moniteur les formate hors
+section critique. Il utilise la fréquence d'entrée et le diviseur du même
+`TickSnapshot` pour afficher la durée associée aux ticks du relevé. Un total de
+zéro est valide lorsque le timer est configuré et n'a encore livré aucune IRQ.
 
 ## Compilation et intégration progressive
 
