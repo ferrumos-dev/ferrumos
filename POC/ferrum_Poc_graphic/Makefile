@@ -7,7 +7,7 @@ PROJECT := ferrumos_graphic
 help:
 	@echo "Targets disponibles:"
 	@echo "  make install     - Installe les dépendances système (Garuda/Arch)"
-	@echo "  make boot        - Installe la toolchain nightly + cible no_std"
+	@echo "  make boot        - Installe la toolchain de rust-toolchain.toml + cible no_std"
 	@echo "  make build       - Construit le runner + kernel + image BIOS"
 	@echo "  make run         - Lance QEMU en mode terminal fiable (serial)"
 	@echo "  make run-screen  - Lance QEMU en mode ecran interactif"
@@ -19,24 +19,22 @@ install:
 	sudo pacman -Syu --needed base-devel rustup qemu-base qemu-desktop llvm lld
 
 boot:
-	rustup toolchain install nightly
-	rustup target add x86_64-unknown-none --toolchain nightly
-	rustup component add rust-src llvm-tools-preview --toolchain nightly
+	rustup toolchain install
 
 build:
-	cargo +nightly build
+	cargo build
 
 run: build
-	FERRUMOS_SERIAL_FALLBACK=1 cargo +nightly run
+	FERRUMOS_SERIAL_FALLBACK=1 cargo run
 
 run-screen: build
-	cargo +nightly run
+	cargo run
 
 run-debug: build
-	FERRUMOS_SERIAL_FALLBACK=1 RUST_BACKTRACE=1 cargo +nightly run
+	FERRUMOS_SERIAL_FALLBACK=1 RUST_BACKTRACE=1 cargo run
 
 run-serial: build
-	FERRUMOS_SERIAL_FALLBACK=1 RUST_BACKTRACE=1 cargo +nightly run
+	FERRUMOS_SERIAL_FALLBACK=1 RUST_BACKTRACE=1 cargo run
 
 clean:
 	cargo clean

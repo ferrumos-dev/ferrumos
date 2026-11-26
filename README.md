@@ -1,8 +1,8 @@
 # FerrumOS
 
-> **FerrumOS** is an experimental operating system written entirely in **Rust**, built for pedagogical and research purposes. It aims to provide deep, hands-on mastery of fundamental OS layers — boot, memory management (paging), interrupts, scheduling, and kernel architecture — while leveraging Rust's memory safety guarantees with minimal `unsafe` code.
+FerrumOS is an experimental x86_64 operating system written in Rust. The integrated kernel boots in QEMU, displays a text prompt and echoes the lines you type on a French AZERTY keyboard. The team uses separate prototypes to develop and test features such as scheduling and heap allocation.
 
-**Start here** · [Run FerrumOS](#integrated-kernel) · [Boot guide](./docs/boot.md) · [Source architecture](./docs/architecture.md) · [Documentation](./docs/README.md) · [Contributing](./CONTRIBUTING.md)
+**First contribution?** [Set up and run the host tests](./docs/greenlights/objectif_complementaire_1/deliverables/README.md) · [Boot FerrumOS in QEMU](#integrated-kernel) · [Choose a contribution](./docs/greenlights/objectif_complementaire_1/deliverables/contribution_scope.md) · [Submit a change](./CONTRIBUTING.md)
 
 ---
 
@@ -132,26 +132,11 @@ Their reported features do not imply that those features already run in the root
 
 ## Getting Started
 
+Follow the [contributor README](./docs/greenlights/objectif_complementaire_1/deliverables/README.md) to clone FerrumOS, install the tools and run the host tests.
+
 ### Integrated Kernel
 
-Install **rustup**, **Python 3.11+** and **QEMU x86_64**, then prepare the pinned
-toolchains using the [boot guide](./docs/boot.md#préparer-les-outils). From the
-repository root:
-
-```sh
-python scripts/boot.py build
-python scripts/boot.py run
-python scripts/boot.py test --timeout 30
-```
-
-On systems where Python 3 is named `python3`, use that command instead.
-`run` opens the QEMU console; click inside it to type, and use Ctrl+Alt to release
-the keyboard and mouse. Each command rebuilds the root kernel and BIOS image,
-failing instead of booting an old image when compilation fails.
-
-The kernel, image and logs stay under `target/`, ignored by Git. Initial toolchain
-and dependency downloads require the network. The [boot guide](./docs/boot.md)
-describes the AZERTY input console, QEMU discovery and diagnostics.
+Follow the [QEMU setup and boot test](./docs/greenlights/objectif_complementaire_1/deliverables/README.md#integrated-kernel) to build the BIOS image and try the console.
 
 ### Quality Checks
 
@@ -307,4 +292,4 @@ See [`docs/ORGANIZATION.md`](./docs/ORGANIZATION.md) for the full task breakdown
 
 ## License
 
-The [reference PoC README](./POC/ferrumos_PoC/README.md#license) mentions MIT. Confirm the license for the whole repository with the maintainers before distribution.
+FerrumOS code and its associated project-authored documentation use the [MIT License](./LICENSE). The [license rationale](./docs/greenlights/objectif_complementaire_1/deliverables/license_rationale.md) explains how to reuse, modify or ship FerrumOS in a commercial product. Third-party components retain their own terms.
