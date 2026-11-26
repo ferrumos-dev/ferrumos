@@ -318,10 +318,13 @@ pub fn run(boot_info: &'static mut BootInfo) -> ! {
         // spaced samples let the QEMU test prove repeated delivery and EOI.
         let clock = interrupts::clock_snapshot();
         if timer_samples < 2 && clock.ticks().saturating_sub(last_sample) >= 5 {
+            // Exercise the same copy a reporter supplies to stats. Both fields
+            // come from this clock reading even if a new IRQ arrives now.
+            let counters = executor.counters().with_timer_ticks(clock.ticks());
             let _ = writeln!(
                 state.console.serial,
                 "\nTIMER_SAMPLE ticks={} uptime_ms={}",
-                clock.ticks(),
+                counters.timer_ticks(),
                 clock.uptime_millis()
             );
             last_sample = clock.ticks();

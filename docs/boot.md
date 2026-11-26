@@ -202,7 +202,7 @@ modification du démarrage ou des pilotes.
 | Benjamin | `src/boot/` conserve l'ordre d'initialisation ; `TextConsole`, `SerialPort` et `Ps2Keyboard` possèdent leurs ressources. Les accès aux ports passent par `arch::x86_64::io`. |
 | Elias | Consommer `InputEvent` et `InputLine<N>` pour le futur shell, puis utiliser `core::fmt::Write` pour les sorties. Le parser ne doit pas relire directement les ports clavier. |
 | Mémoire et timer | `arch::x86_64::memory::heap()` rend le tas initialisé. Ses allocations sont possédées et libérées au `drop`. L'adaptateur timer possède l'IDT et les PIC/PIT. Étendre les IRQ après définition de leurs propriétaires et de leur acquittement. |
-| Monitoring | Importer `kernel::memory::MemoryReporter` et lire `heap.memory_snapshot()`. `heap.stats()` expose aussi les tailles demandées vivantes, allocations et échecs. Pour le temps, capturer `arch::x86_64::interrupts::clock_snapshot()` puis afficher les valeurs du même `TickSnapshot`, hors IRQ et hors verrou. |
+| Monitoring | Importer `kernel::memory::MemoryReporter` et lire `heap.memory_snapshot()`. `heap.stats()` expose aussi les tailles demandées vivantes, allocations et échecs. Capturer `arch::x86_64::interrupts::clock_snapshot()` une fois et ajouter son total au relevé avec `executor.counters().with_timer_ticks(clock.ticks())`. Utiliser la fréquence d'entrée et le diviseur du même échantillon pour afficher la durée hors IRQ et hors verrou. |
 
 `Ps2Keyboard::poll_event` consomme au plus un octet disponible par appel et produit
 des événements typés. Le décodage clavier et `InputLine` sont réutilisables sans
