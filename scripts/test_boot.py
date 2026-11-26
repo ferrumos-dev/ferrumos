@@ -91,6 +91,85 @@ class BootChecks(unittest.TestCase):
             with self.assertRaisesRegex(boot.BootError, "timed out"):
                 boot.wait_for_serial(process, log, (boot.ACK,), time.monotonic() + 0.01)
 
+    def test_driver_boot_markers_do_not_validate_kernel_tasks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "serial.log"
+            log.write_text("FERRUMOS_BOOT_OK\nDISPLAY_READY\nKEYBOARD_READY\n", encoding="utf-8")
+            process = Mock()
+            process.poll.return_value = None
+            with self.assertRaisesRegex(boot.BootError, "timed out"):
+                boot.wait_for_serial(process, log, boot.MARKERS, time.monotonic() + 0.01)
+
+    def test_memory_summary_rejects_absent_inconsistent_or_impossible_totals(self):
+        for text in ("", "MEMORY_USABLE bytes=0 frames=0", "MEMORY_USABLE bytes=1 frames=1",
+                     "MEMORY_USABLE bytes=268435456 frames=65536"):
+            with self.subTest(text=text), self.assertRaises(boot.BootError):
+                boot.verify_memory_summary(text)
+        self.assertEqual(boot.verify_memory_summary("MEMORY_USABLE bytes=8200 frames=2\n"),
+                         {"usable_bytes": 8200, "usable_frames": 2})
+
+    def test_heap_sample_requires_full_recovery_after_free(self):
+        for text in ("", "HEAP_SAMPLE capacity=1048576 used=16 free=1048560",
+                     "HEAP_SAMPLE capacity=0 used=0 free=0"):
+            with self.subTest(text=text), self.assertRaises(boot.BootError):
+                boot.verify_heap_summary(text)
+        self.assertEqual(boot.verify_heap_summary("HEAP_SAMPLE capacity=1048576 used=0 free=1048576\n"),
+                         {"capacity_bytes": 1048576, "used_bytes": 0, "free_bytes": 1048576})
+
+    def test_one_irq_stalled_ticks_and_inconsistent_uptime_fail_timer_check(self):
+        first = {"ticks": 5, "uptime_ms": 50}
+        for samples in ([first], [first, first], [first, {"ticks": 10, "uptime_ms": 99}]):
+            with self.subTest(samples=samples), self.assertRaises(boot.BootError):
+                boot.verify_timer_samples(samples)
+        samples = boot.timer_samples("TIMER_SAMPLE ticks=5 uptime_ms=50\nTIMER_SAMPLE ticks=10 uptime_ms=100\n")
+        boot.verify_timer_samples(samples)
+
+    def test_a_half_written_timer_line_is_not_read_as_a_sample(self):
+        # The second line of each case is the truncation QEMU can expose when
+        # the log is read between two bytes. Only complete lines are samples.
+        complete = "TIMER_SAMPLE ticks=5 uptime_ms=50\n"
+        first = [{"ticks": 5, "uptime_ms": 50}]
+        for text, expected in (("TIMER_SAMPLE ticks=10 uptime_ms=10", []),
+                               (complete, first),
+                               (complete + "TIMER_SAMPLE ticks=10 uptime_ms=10", first),
+                               (complete + "TIMER_SAMPLE ticks=10 uptime_m", first),
+                               (complete + "TIMER_SAMPLE ticks=10 uptime_ms=100\n",
+                                first + [{"ticks": 10, "uptime_ms": 100}])):
+            with self.subTest(text=text):
+                self.assertEqual(boot.timer_samples(text), expected)
+
+    def test_missing_second_irq_times_out(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "serial.log"
+            log.write_text("TIMER_SAMPLE ticks=5 uptime_ms=50\n", encoding="utf-8")
+            process = Mock()
+            process.poll.return_value = None
+            with self.assertRaisesRegex(boot.BootError, "timed out"):
+                boot.wait_for_timer(process, log, time.monotonic() + 0.01)
+
+    def test_stats_report_requires_the_real_heap_and_a_consistent_uptime(self):
+        measured = ("STATS_BEGIN\n"
+                    "uptime            00:00:01.000\n"
+                    "heap              0 B used of 1048576 B (0.0 %)\n"
+                    "heap free         1048576 B\n"
+                    "runnable tasks    1\n"
+                    "timer ticks       100\n"
+                    "context switches  0\n"
+                    "dispatches        12\n"
+                    "STATS_END\n")
+        for text in ("",
+                     measured.replace("STATS_END", ""),
+                     measured.replace("dispatches        12\n", ""),
+                     measured.replace("0 B used of 1048576 B (0.0 %)", "unavailable"),
+                     measured.replace("1048576 B (0.0 %)", "65536 B (0.0 %)"),
+                     measured.replace("00:00:01.000", "00:00:02.000"),
+                     measured.replace("timer ticks       100", "timer ticks       0")):
+            with self.subTest(text=text), self.assertRaises(boot.BootError):
+                boot.verify_stats_report(text)
+        report = boot.verify_stats_report(measured)
+        self.assertEqual(report["timer ticks"], "100")
+        self.assertEqual(report["heap free"], "1048576 B")
+
     def test_uniform_or_truncated_screenshot_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             image = Path(temporary) / "screen.ppm"

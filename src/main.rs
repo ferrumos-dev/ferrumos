@@ -8,11 +8,15 @@ compile_error!(
     "Build the kernel with --target x86_64-unknown-none; use scripts/boot.py to run it."
 );
 
-use bootloader_api::{entry_point, BootInfo, BootloaderConfig};
+use bootloader_api::{config::Mapping, entry_point, BootInfo, BootloaderConfig};
 
 static BOOT_CONFIG: BootloaderConfig = {
     let mut config = BootloaderConfig::new_default();
     config.kernel_stack_size = 128 * 1024;
+    // The paging adapter translates physical table-frame addresses through
+    // this bootloader-owned direct map. It may only allocate frames marked
+    // Usable and must keep exclusive mutable ownership of the active mapper.
+    config.mappings.physical_memory = Some(Mapping::Dynamic);
     config
 };
 

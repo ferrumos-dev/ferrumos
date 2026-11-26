@@ -2,8 +2,9 @@
 //!
 //! The source tree separates portable kernel policies, architecture-specific
 //! mechanisms, drivers and higher-level services. The boot path initializes
-//! a framebuffer console, serial diagnostics and polled PS/2 input. Kernel
-//! policies and higher-level services remain independent integration work.
+//! a framebuffer console, serial diagnostics and polled PS/2 input. A portable
+//! priority scheduler and cooperative executor dispatch bounded kernel tasks.
+//! Memory observations and event counters have explicit ownership contracts.
 
 #![no_std]
 

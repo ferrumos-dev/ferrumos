@@ -28,9 +28,9 @@ FerrumOS is an experimental x86_64 operating system written in Rust. The integra
 FerrumOS is not intended to compete with existing operating systems. Instead, its purpose is to **master the internals** of a modern OS from the ground up:
 
 - **Boot process** — integrated BIOS image using `bootloader 0.11.15`; older PoCs retain their own pipelines
-- **Memory management** — x86_64 paging (4-level page tables), isolation, custom heap allocator (Bump → linked-list / fixed-size blocks)
-- **Interrupt handling** — IDT, PIC/APIC, timer, keyboard, exception handlers
-- **Scheduling** — adaptive-priority simulation in the scheduler PoC and a priority policy proposed for the integrated kernel
+- **Memory management** — validated physical frames, dedicated heap pages and reusable linked-list allocation
+- **Interrupt handling** — IDT, legacy PIC IRQ0, PIT timer and terminal exception diagnostics
+- **Scheduling** — fixed priorities and FIFO ties in the integrated kernel, with bounded cooperative task steps
 - **System interface** — CLI shell with command parsing, task manager, resource monitoring
 
 The project is structured around **4 team members**, each responsible for a dedicated technical area, working together through clearly defined interfaces.
@@ -44,9 +44,13 @@ The project is structured around **4 team members**, each responsible for a dedi
 - BIOS boot under QEMU from the root project, with a framebuffer text console and COM1 diagnostics
 - Polled PS/2 keyboard input using French AZERTY, editable UTF-8 lines, Backspace, Enter and Escape
 - Host driver tests and an automated QEMU check of boot, keyboard editing and a nonblank framebuffer
+- Boot memory-map validation with usable-byte and whole-frame counts
+- A 1 MiB heap mapped at `0x4444_4444_0000`, with owned allocations, automatic free on drop and real usage snapshots
+- Periodic PIT interrupts near 100 Hz, copied uptime observations and timer wakeups from CPU halt
+- Allocation-free priority scheduling and cooperative dispatch of the input and startup diagnostic tasks
 
-The input console echoes lines; it does not execute shell commands. Heap initialization,
-timer interrupts, scheduling, filesystem services and user space remain integration work.
+The input console echoes editable lines. Command parsing, CPU context switching,
+filesystem services and user space remain integration work.
 See the [boot guide](./docs/boot.md) for the supported configuration and verification limits.
 
 **Reference PoC milestones reported in the EIP documentation**
@@ -115,6 +119,7 @@ Their reported features do not imply that those features already run in the root
 | **Rust 1.94.0** | Root library and kernel compilation | Pinned stable toolchain and built-in `x86_64-unknown-none` target |
 | **nightly-2026-03-07** | Isolated image builder | Builds the BIOS stages required by `bootloader 0.11.15` |
 | **bootloader / bootloader_api 0.11.15** | BIOS image and kernel ABI | Matching pinned versions for the boot interface |
+| **ferrum_alloc / spin / x86_64** | Root heap and page mappings | Reuses the project's linked-list allocator with interrupt-safe locking and page-table adapters |
 | **Python 3.11+** | Root build, launch and smoke-test commands | Standard-library script shared by local development and CI |
 | **Rust nightly / cargo-bootimage** | Independent PoCs | Their versions and build commands remain scoped to each prototype |
 | **QEMU x86_64** | Execution & validation | Isolation, reproducibility, easy debugging |
@@ -148,8 +153,9 @@ python -m unittest discover -s scripts -p test_boot.py -v
 python scripts/boot.py test --timeout 30
 ```
 
-The [project CI](./.github/workflows/kernel.yml) runs host checks, the actual BIOS
-image and QEMU input test, and preserves boot diagnostics. Documentation warnings
+The [project CI](./.github/workflows/kernel.yml) runs host checks and the BIOS
+smoke test for heap allocate/free, repeated timer delivery, keyboard and framebuffer.
+It preserves boot diagnostics. Documentation warnings
 are errors in CI. The image builder and heap crates retain their own manifests
 and lockfiles; the root workspace excludes them. See the [boot guide](./docs/boot.md#contrôles-et-preuves)
 for the distinction between host tests, QEMU observations and remaining work.
@@ -210,8 +216,9 @@ Layered architecture inspired by the C4 model:
 
 Key design decisions:
 
-- **Memory**: x86_64 paging, 4-level page tables, strict isolation, custom Bump Allocator (evolving toward linked-list / fixed-size blocks)
-- **Scheduling**: see the [priority scheduler proposal](./docs/greenlights/objecitf_obligatoire_1/ordonnancement_a_priorites.md) and its integration tests
+- **Memory**: the bootloader's physical direct map gives the paging adapter access to the active page tables. The kernel claims whole usable frames for its 1 MiB heap. `KernelHeap::allocate` returns zero-initialized `HeapBlock` handles that free their exact allocation on drop. Shared usage observations come from `MemoryReporter` under the same heap lock.
+- **Timer**: the IDT routes legacy PIC IRQ0 to a bounded PIT handler. The handler records a tick and acknowledges the PIC. Foreground code reads `clock_snapshot()` and formats its copied `TickSnapshot` after the IRQ has returned.
+- **Scheduling**: [`PriorityScheduler`](./src/kernel/scheduler/mod.rs) chooses ready IDs and [`CooperativeExecutor`](./src/kernel/executor/mod.rs) invokes task functions. The boot input task uses this path. A yielding task moves behind its peers, and a blocked task waits for an explicit wakeup.
 - **Safety**: Rust's ownership model enforced; `unsafe` blocks strictly limited to IRQ handlers, context switches, and physical memory access
 
 ---
