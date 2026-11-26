@@ -129,6 +129,11 @@ fn diagnostics_step(state: &mut BootState<'_>) -> TaskStatus {
 /// The two markers delimit the report in the serial log, which lets the boot
 /// test check that the measurements describe the real heap and a real tick
 /// count instead of placeholder values.
+///
+/// A refused serial write is dropped, as every other diagnostic on this path:
+/// the report carries no state the kernel needs, so losing it must not stop the
+/// boot loop. The capture itself cannot fail, and an unmeasurable source is
+/// reported as unavailable rather than as an error.
 fn report_stats(
     heap: &memory::KernelHeap,
     executor: &CooperativeExecutor<BootState<'_>, 2>,

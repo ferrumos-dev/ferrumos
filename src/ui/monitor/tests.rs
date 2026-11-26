@@ -2,7 +2,7 @@ use super::*;
 
 use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
-use crate::kernel::telemetry::{CapturedKernel, Counters, KernelReporter, UnwiredKernel};
+use crate::kernel::telemetry::{Counters, KernelReporter, UnwiredKernel};
 use crate::ui::shell::{Console, Shell};
 
 const BUFFER_LEN: usize = 1024;
@@ -16,6 +16,22 @@ const TIMER_DIVISOR: u16 = 11_932;
 
 /// Timer configuration of a kernel whose timer is not programmed yet.
 const UNCONFIGURED_TIMER: (u32, u16) = (0, 0);
+
+struct MeasuredKernel {
+    used_bytes: u64,
+    runnable_tasks: usize,
+    timer_ticks: u64,
+}
+
+impl KernelReporter for MeasuredKernel {
+    fn kernel_snapshot(&self) -> KernelSnapshot {
+        KernelSnapshot {
+            memory: MemorySnapshot::new(HEAP_CAPACITY, self.used_bytes),
+            runnable_tasks: self.runnable_tasks,
+            counters: Counters::default().with_timer_ticks(self.timer_ticks),
+        }
+    }
+}
 
 struct TextBuffer {
     bytes: [u8; BUFFER_LEN],
@@ -256,11 +272,11 @@ fn a_destination_that_overflows_reports_the_error() {
 
 #[test]
 fn the_view_serves_the_shell_the_report_of_the_command() {
-    let kernel = CapturedKernel::from_memory(
-        MemorySnapshot::new(HEAP_CAPACITY, 41_984),
-        4,
-        Counters::default().with_timer_ticks(100),
-    );
+    let kernel = MeasuredKernel {
+        used_bytes: 41_984,
+        runnable_tasks: 4,
+        timer_ticks: 100,
+    };
     let view = StatsView::new(&kernel, TIMER_INPUT_HZ, TIMER_DIVISOR);
     let mut through_view = TextBuffer::new();
     let mut through_command = TextBuffer::new();
@@ -276,11 +292,11 @@ fn the_view_serves_the_shell_the_report_of_the_command() {
 
 #[test]
 fn the_shell_stats_command_prints_the_measured_report() {
-    let kernel = CapturedKernel::from_memory(
-        MemorySnapshot::new(HEAP_CAPACITY, 2048),
-        2,
-        Counters::default().with_timer_ticks(100),
-    );
+    let kernel = MeasuredKernel {
+        used_bytes: 2048,
+        runnable_tasks: 2,
+        timer_ticks: 100,
+    };
     let view = StatsView::new(&kernel, TIMER_INPUT_HZ, TIMER_DIVISOR);
     let shell = Shell::with_stats(&view);
     let mut out = TextBuffer::new();

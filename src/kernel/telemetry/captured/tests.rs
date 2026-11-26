@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::kernel::memory::MemorySnapshot;
+
 const HEAP_CAPACITY: u64 = 100 * 1024;
 
 struct Heap {
@@ -89,14 +91,4 @@ fn two_reads_of_one_capture_agree() {
     let captured = CapturedKernel::capture(&heap, 2, counters());
 
     assert_eq!(captured.kernel_snapshot(), captured.kernel_snapshot());
-}
-
-#[test]
-fn a_heap_reading_taken_earlier_can_be_passed_directly() {
-    let memory = MemorySnapshot::new(HEAP_CAPACITY, 1024);
-
-    let snapshot = CapturedKernel::from_memory(memory, 1, Counters::default()).kernel_snapshot();
-
-    assert_eq!(snapshot.memory, memory);
-    assert_eq!(snapshot.runnable_tasks, 1);
 }

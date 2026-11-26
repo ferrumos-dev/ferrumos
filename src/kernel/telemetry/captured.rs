@@ -1,6 +1,6 @@
 //! Kernel reporter holding one observation of the live measurement sources.
 
-use crate::kernel::memory::{MemoryReporter, MemorySnapshot};
+use crate::kernel::memory::MemoryReporter;
 
 use super::{Counters, KernelReporter, KernelSnapshot};
 
@@ -33,22 +33,9 @@ impl CapturedKernel {
     /// [`Counters::with_timer_ticks`] from the same clock reading it uses to
     /// render the elapsed time.
     pub fn capture(memory: &dyn MemoryReporter, runnable_tasks: usize, counters: Counters) -> Self {
-        Self::from_memory(memory.memory_snapshot(), runnable_tasks, counters)
-    }
-
-    /// Builds an observation from a heap reading the caller already took.
-    ///
-    /// `memory` is [`None`] when no source can measure the heap yet. This
-    /// constructor exists for a caller that captured the heap earlier in its
-    /// own critical section, and for tests.
-    pub const fn from_memory(
-        memory: Option<MemorySnapshot>,
-        runnable_tasks: usize,
-        counters: Counters,
-    ) -> Self {
         Self {
             snapshot: KernelSnapshot {
-                memory,
+                memory: memory.memory_snapshot(),
                 runnable_tasks,
                 counters,
             },
