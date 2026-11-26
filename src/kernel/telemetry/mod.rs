@@ -20,8 +20,10 @@
 use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
 
+mod captured;
 mod unwired;
 
+pub use captured::CapturedKernel;
 pub use unwired::UnwiredKernel;
 
 /// Milliseconds in one second.
