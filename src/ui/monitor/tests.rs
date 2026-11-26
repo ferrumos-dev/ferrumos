@@ -2,9 +2,10 @@ use super::*;
 
 use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
-use crate::kernel::telemetry::{Counters, KernelReporter, UnwiredKernel};
+use crate::kernel::telemetry::{CapturedKernel, Counters, KernelReporter, UnwiredKernel};
+use crate::ui::shell::{Console, Shell};
 
-const BUFFER_LEN: usize = 512;
+const BUFFER_LEN: usize = 1024;
 const HEAP_CAPACITY: u64 = 100 * 1024;
 
 /// Input frequency of the legacy timer, as configured by the architecture layer.
@@ -31,6 +32,13 @@ impl TextBuffer {
 
     fn as_str(&self) -> &str {
         core::str::from_utf8(&self.bytes[..self.len]).expect("the report is valid utf8")
+    }
+}
+
+impl Console for TextBuffer {
+    fn clear(&mut self) -> fmt::Result {
+        self.len = 0;
+        Ok(())
     }
 }
 
@@ -244,4 +252,64 @@ fn a_destination_that_overflows_reports_the_error() {
     }
 
     assert!(render_stats(&measured_snapshot(), None, &mut FullBuffer).is_err());
+}
+
+#[test]
+fn the_view_serves_the_shell_the_report_of_the_command() {
+    let kernel = CapturedKernel::from_memory(
+        MemorySnapshot::new(HEAP_CAPACITY, 41_984),
+        4,
+        Counters::default().with_timer_ticks(100),
+    );
+    let view = StatsView::new(&kernel, TIMER_INPUT_HZ, TIMER_DIVISOR);
+    let mut through_view = TextBuffer::new();
+    let mut through_command = TextBuffer::new();
+
+    view.write_stats(&mut through_view)
+        .expect("the buffer is large enough");
+    stats_command(&kernel, TIMER_INPUT_HZ, TIMER_DIVISOR, &mut through_command)
+        .expect("the buffer is large enough");
+
+    assert_eq!(through_view.as_str(), through_command.as_str());
+    assert_eq!(value_of(through_view.as_str(), "uptime"), "00:00:01.000");
+}
+
+#[test]
+fn the_shell_stats_command_prints_the_measured_report() {
+    let kernel = CapturedKernel::from_memory(
+        MemorySnapshot::new(HEAP_CAPACITY, 2048),
+        2,
+        Counters::default().with_timer_ticks(100),
+    );
+    let view = StatsView::new(&kernel, TIMER_INPUT_HZ, TIMER_DIVISOR);
+    let shell = Shell::with_stats(&view);
+    let mut out = TextBuffer::new();
+
+    shell
+        .execute("stats", &mut out)
+        .expect("the buffer is large enough");
+
+    let report = out.as_str();
+    assert_eq!(value_of(report, "uptime"), "00:00:01.000");
+    assert_eq!(value_of(report, "heap free"), "100352 B");
+    assert_eq!(value_of(report, "runnable tasks"), "2");
+    assert_eq!(value_of(report, "timer ticks"), "100");
+    assert_eq!(report.lines().count(), 7, "{report}");
+}
+
+#[test]
+fn the_shell_reports_an_unwired_kernel_without_inventing_values() {
+    let (input_hz, divisor) = UNCONFIGURED_TIMER;
+    let view = StatsView::new(&UnwiredKernel, input_hz, divisor);
+    let shell = Shell::with_stats(&view);
+    let mut out = TextBuffer::new();
+
+    shell
+        .execute("stats", &mut out)
+        .expect("the buffer is large enough");
+
+    let report = out.as_str();
+    assert_eq!(value_of(report, "uptime"), UNAVAILABLE);
+    assert_eq!(value_of(report, "heap "), UNAVAILABLE);
+    assert_eq!(value_of(report, "runnable tasks"), "0");
 }

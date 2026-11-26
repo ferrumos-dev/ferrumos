@@ -7,6 +7,10 @@
 //!
 //! A measurement the kernel cannot take yet is rendered as [`UNAVAILABLE`] and
 //! never as zero, so a reader can tell an idle counter from a missing source.
+//!
+//! [`StatsView`] serves that report to the shell through its
+//! [`StatsProvider`] interface, so the shell holds no measurement source and
+//! no timer configuration of its own.
 
 #![forbid(unsafe_code)]
 
@@ -14,6 +18,7 @@ use core::fmt::{self, Write};
 
 use crate::kernel::interrupts::TickSnapshot;
 use crate::kernel::telemetry::{KernelReporter, KernelSnapshot, Uptime};
+use crate::ui::shell::StatsProvider;
 
 /// Text shown in place of a measurement the kernel cannot take yet.
 pub const UNAVAILABLE: &str = "unavailable";
@@ -41,7 +46,7 @@ const PERMILLE_PER_PERCENT: u16 = 10;
 ///
 /// # Errors
 /// Returns the error reported by `out`, as [`render_stats`] does.
-pub fn stats_command<W: Write>(
+pub fn stats_command<W: Write + ?Sized>(
     reporter: &dyn KernelReporter,
     timer_input_hz: u32,
     timer_divisor: u16,
@@ -68,7 +73,7 @@ pub fn stats_command<W: Write>(
 /// Returns the error reported by `out`, which happens when the destination
 /// cannot accept the whole report. The report is then incomplete, and the
 /// caller decides whether to retry or to drop it.
-pub fn render_stats<W: Write>(
+pub fn render_stats<W: Write + ?Sized>(
     snapshot: &KernelSnapshot,
     uptime: Option<Uptime>,
     out: &mut W,
@@ -79,7 +84,7 @@ pub fn render_stats<W: Write>(
     write_counters(snapshot, out)
 }
 
-fn write_uptime<W: Write>(uptime: Option<Uptime>, out: &mut W) -> fmt::Result {
+fn write_uptime<W: Write + ?Sized>(uptime: Option<Uptime>, out: &mut W) -> fmt::Result {
     write_label(out, "uptime")?;
     match uptime {
         Some(uptime) => {
@@ -94,7 +99,7 @@ fn write_uptime<W: Write>(uptime: Option<Uptime>, out: &mut W) -> fmt::Result {
     }
 }
 
-fn write_heap<W: Write>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Result {
+fn write_heap<W: Write + ?Sized>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Result {
     let Some(heap) = snapshot.memory else {
         write_label(out, "heap")?;
         writeln!(out, "{UNAVAILABLE}")?;
@@ -123,12 +128,12 @@ fn write_heap<W: Write>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Result {
     writeln!(out, "{} B", heap.heap_free_bytes())
 }
 
-fn write_runnable_tasks<W: Write>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Result {
+fn write_runnable_tasks<W: Write + ?Sized>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Result {
     write_label(out, "runnable tasks")?;
     writeln!(out, "{}", snapshot.runnable_tasks)
 }
 
-fn write_counters<W: Write>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Result {
+fn write_counters<W: Write + ?Sized>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Result {
     write_label(out, "timer ticks")?;
     writeln!(out, "{}", snapshot.counters.timer_ticks())?;
 
@@ -139,8 +144,46 @@ fn write_counters<W: Write>(snapshot: &KernelSnapshot, out: &mut W) -> fmt::Resu
     writeln!(out, "{}", snapshot.counters.dispatches())
 }
 
-fn write_label<W: Write>(out: &mut W, label: &str) -> fmt::Result {
+fn write_label<W: Write + ?Sized>(out: &mut W, label: &str) -> fmt::Result {
     write!(out, "{label:<width$}", width = LABEL_WIDTH)
+}
+
+/// Serves the shell's `stats` command from one kernel reporter.
+///
+/// The shell owns no measurement source: it holds a [`StatsProvider`] and
+/// calls it outside any critical section. This view carries the reporter to
+/// read and the timer configuration that turns its tick count into an elapsed
+/// time, so neither the shell nor the report depends on the architecture
+/// exposing those values.
+pub struct StatsView<'a> {
+    reporter: &'a dyn KernelReporter,
+    timer_input_hz: u32,
+    timer_divisor: u16,
+}
+
+impl<'a> StatsView<'a> {
+    /// Builds the view reading `reporter` through the configured timer.
+    ///
+    /// `timer_input_hz` and `timer_divisor` describe the timer delivering the
+    /// ticks the reporter counts, as [`stats_command`] documents. A zero in
+    /// either one reports the elapsed time as unavailable.
+    pub const fn new(
+        reporter: &'a dyn KernelReporter,
+        timer_input_hz: u32,
+        timer_divisor: u16,
+    ) -> Self {
+        Self {
+            reporter,
+            timer_input_hz,
+            timer_divisor,
+        }
+    }
+}
+
+impl StatsProvider for StatsView<'_> {
+    fn write_stats(&self, out: &mut dyn Write) -> fmt::Result {
+        stats_command(self.reporter, self.timer_input_hz, self.timer_divisor, out)
+    }
 }
 
 #[cfg(test)]
