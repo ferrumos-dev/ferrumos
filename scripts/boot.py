@@ -158,8 +158,11 @@ def verify_heap_summary(text: str) -> dict[str, int]:
 
 def timer_samples(text: str) -> list[dict[str, int]]:
     """Read immutable snapshots; the kernel emits at most two during boot."""
+    # The log is read while QEMU is still writing it one byte at a time. The
+    # trailing newline is required so a half-written line, whose number would be
+    # cut short, is left for the next read instead of becoming a sample.
     return [{"ticks": int(ticks), "uptime_ms": int(milliseconds)}
-            for ticks, milliseconds in re.findall(r"^TIMER_SAMPLE ticks=(\d+) uptime_ms=(\d+)$",
+            for ticks, milliseconds in re.findall(r"^TIMER_SAMPLE ticks=(\d+) uptime_ms=(\d+)\r?\n",
                                                    text, re.MULTILINE)]
 
 

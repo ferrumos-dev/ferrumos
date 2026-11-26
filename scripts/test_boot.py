@@ -124,6 +124,20 @@ class BootChecks(unittest.TestCase):
         samples = boot.timer_samples("TIMER_SAMPLE ticks=5 uptime_ms=50\nTIMER_SAMPLE ticks=10 uptime_ms=100\n")
         boot.verify_timer_samples(samples)
 
+    def test_a_half_written_timer_line_is_not_read_as_a_sample(self):
+        # The second line of each case is the truncation QEMU can expose when
+        # the log is read between two bytes. Only complete lines are samples.
+        complete = "TIMER_SAMPLE ticks=5 uptime_ms=50\n"
+        first = [{"ticks": 5, "uptime_ms": 50}]
+        for text, expected in (("TIMER_SAMPLE ticks=10 uptime_ms=10", []),
+                               (complete, first),
+                               (complete + "TIMER_SAMPLE ticks=10 uptime_ms=10", first),
+                               (complete + "TIMER_SAMPLE ticks=10 uptime_m", first),
+                               (complete + "TIMER_SAMPLE ticks=10 uptime_ms=100\n",
+                                first + [{"ticks": 10, "uptime_ms": 100}])):
+            with self.subTest(text=text):
+                self.assertEqual(boot.timer_samples(text), expected)
+
     def test_missing_second_irq_times_out(self):
         with tempfile.TemporaryDirectory() as temporary:
             log = Path(temporary) / "serial.log"
