@@ -148,13 +148,18 @@ QEMU, après la construction. Le test démarre QEMU sans fenêtre et :
 2. exige deux lignes `TIMER_SAMPLE` avec des ticks strictement croissants et une
    conversion en millisecondes conforme à la fraction du PIT. Une IRQ unique ou
    un compteur figé échoue à ce contrôle.
-3. injecte les touches physiques `t`, `e`, `s`, `x`, Retour arrière, `t`, Entrée
+3. attend le rapport `stats` délimité par `STATS_BEGIN` et `STATS_END`, puis
+   exige sept mesures, aucune valeur indisponible, une capacité de tas de
+   1048576 octets et une durée conforme au total de ticks du rapport selon la
+   fraction du PIT. Ce rapport provient des sources réelles du noyau, capturées
+   en un seul échantillon et rendues hors section critique ;
+4. injecte les touches physiques `t`, `e`, `s`, `x`, Retour arrière, `t`, Entrée
    via le moniteur QMP ;
-4. attend l'acquittement exact `INPUT_LINE: test`, issu du clavier PS/2 et de la
+5. attend l'acquittement exact `INPUT_LINE: test`, issu du clavier PS/2 et de la
    tâche coopérative d'édition exécutée dans le noyau ;
-5. capture le framebuffer et vérifie ses dimensions, sa complétude et la présence
+6. capture le framebuffer et vérifie ses dimensions, sa complétude et la présence
    de plusieurs couleurs ;
-6. termine QEMU proprement et écrit le verdict.
+7. termine QEMU proprement et écrit le verdict.
 
 Une panique, un marqueur manquant, une image uniforme, une fermeture prématurée
 de QEMU ou un délai dépassé font échouer la commande. Le contrôle de l'image

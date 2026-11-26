@@ -67,11 +67,11 @@ src/
 | `kernel/interrupts` | `TimerTickSink` décrit la réception directe d'événements, notamment en simulation. `TickSnapshot` convertit un relevé et la fréquence rationnelle du timer en durée entière. |
 | `kernel/scheduler` | `PriorityScheduler<N>` choisit `High`, puis `Normal`, puis `Low`. À priorité égale, l'ordre FIFO évolue sur cession ou réveil. Les doublons et dépassements de capacité sont refusés sans mutation. |
 | `kernel/executor` | `CooperativeExecutor<C, N>` conserve les fonctions et leur état. Un pas rend `Yield`, `Blocked` ou `Complete`. L'appel emprunte le contexte et utilise la pile du CPU appelant. |
-| `kernel/telemetry` | Conserver des comptes distincts pour les appels aux tâches, les interruptions timer livrées et les bascules CPU. Le fournisseur de `KernelSnapshot` assemble un relevé copié. |
+| `kernel/telemetry` | Conserver des comptes distincts pour les appels aux tâches, les interruptions timer livrées et les bascules CPU. Le fournisseur de `KernelSnapshot` assemble un relevé copié. `CapturedKernel` capture les sources réelles une fois, `UnwiredKernel` répond tant qu’aucune source n’est raccordée. |
 | `drivers/serial`, `display`, `input`, `console.rs` | Piloter COM1 et PS/2, rendre le texte dans le framebuffer et conserver une ligne UTF-8 de capacité fixe. Les opérations matérielles restent hors des tests hôte. |
 | `drivers/storage`, `network` | Réserver les pilotes de stockage par blocs et de carte réseau. |
 | `services` | Construire les fonctionnalités de fichiers et de réseau à partir des interfaces du noyau et des pilotes. |
-| `ui` | Fournir le shell et le moniteur de tâches et de ressources. |
+| `ui` | Fournir le shell et le moniteur de tâches et de ressources. Le moniteur rend le relevé en texte, distingue une mesure indisponible d’un compteur à zéro et le sert au shell par `StatsProvider`. |
 | `programs` | Accueillir les futurs programmes ; leur format et leur modèle d'exécution seront définis avec l'espace utilisateur. |
 
 ## Frontières entre modules
@@ -199,6 +199,13 @@ capture les données sous sa synchronisation, puis le moniteur les formate hors
 section critique. Il utilise la fréquence d'entrée et le diviseur du même
 `TickSnapshot` pour afficher la durée associée aux ticks du relevé. Un total de
 zéro est valide lorsque le timer est configuré et n'a encore livré aucune IRQ.
+
+La boucle de démarrage applique cette règle après les deux relevés périodiques.
+Elle construit un `CapturedKernel` depuis le tas, l'ensemble des tâches prêtes et
+ces compteurs, puis écrit le rapport entre les marqueurs `STATS_BEGIN` et
+`STATS_END` par l'interface `StatsProvider` du shell. Le test de démarrage y
+exige sept mesures, aucune valeur indisponible, la capacité du tas mappé et une
+durée conforme au total de ticks du rapport lui-même.
 
 ## Compilation et intégration progressive
 
