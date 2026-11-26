@@ -21,10 +21,8 @@ use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
 
 mod captured;
-mod unwired;
 
 pub use captured::CapturedKernel;
-pub use unwired::UnwiredKernel;
 
 /// Milliseconds in one second.
 const MILLISECONDS_PER_SECOND: u64 = 1_000;

@@ -12,8 +12,8 @@ use super::{Counters, KernelReporter, KernelSnapshot};
 /// the lines of a report describing a single instant even though the live state
 /// keeps changing.
 ///
-/// This reporter replaces [`super::UnwiredKernel`] wherever the heap, the ready
-/// set and the counters exist. An unmeasurable heap is still reported as
+/// This is the only reporter of the integrated kernel: every value it carries
+/// comes from a source its caller holds. An unmeasurable heap is reported as
 /// unavailable, so a missing source stays distinguishable from an empty heap.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CapturedKernel {

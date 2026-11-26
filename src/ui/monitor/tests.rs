@@ -2,7 +2,7 @@ use super::*;
 
 use crate::kernel::interrupts::TimerTickSink;
 use crate::kernel::memory::MemorySnapshot;
-use crate::kernel::telemetry::{Counters, KernelReporter, UnwiredKernel};
+use crate::kernel::telemetry::{Counters, KernelReporter};
 use crate::ui::shell::{Console, Shell};
 
 const BUFFER_LEN: usize = 1024;
@@ -16,6 +16,18 @@ const TIMER_DIVISOR: u16 = 11_932;
 
 /// Timer configuration of a kernel whose timer is not programmed yet.
 const UNCONFIGURED_TIMER: (u32, u16) = (0, 0);
+
+struct UnmeasuredKernel;
+
+impl KernelReporter for UnmeasuredKernel {
+    fn kernel_snapshot(&self) -> KernelSnapshot {
+        KernelSnapshot {
+            memory: None,
+            runnable_tasks: 0,
+            counters: Counters::default(),
+        }
+    }
+}
 
 struct MeasuredKernel {
     used_bytes: u64,
@@ -203,11 +215,12 @@ fn every_line_is_labelled_and_terminated() {
 }
 
 #[test]
-fn the_command_reports_an_unwired_kernel_without_inventing_values() {
+fn the_command_reports_an_unmeasured_kernel_without_inventing_values() {
     let mut out = TextBuffer::new();
     let (input_hz, divisor) = UNCONFIGURED_TIMER;
 
-    stats_command(&UnwiredKernel, input_hz, divisor, &mut out).expect("the buffer is large enough");
+    stats_command(&UnmeasuredKernel, input_hz, divisor, &mut out)
+        .expect("the buffer is large enough");
 
     let report = out.as_str();
     assert_eq!(value_of(report, "uptime"), UNAVAILABLE);
@@ -251,7 +264,7 @@ fn the_command_derives_the_uptime_from_the_ticks_it_read() {
 fn a_configured_timer_with_no_tick_yet_shows_a_zero_uptime() {
     let mut out = TextBuffer::new();
 
-    stats_command(&UnwiredKernel, TIMER_INPUT_HZ, TIMER_DIVISOR, &mut out)
+    stats_command(&UnmeasuredKernel, TIMER_INPUT_HZ, TIMER_DIVISOR, &mut out)
         .expect("the buffer is large enough");
 
     assert_eq!(value_of(out.as_str(), "uptime"), "00:00:00.000");
@@ -314,9 +327,9 @@ fn the_shell_stats_command_prints_the_measured_report() {
 }
 
 #[test]
-fn the_shell_reports_an_unwired_kernel_without_inventing_values() {
+fn the_shell_reports_an_unmeasured_kernel_without_inventing_values() {
     let (input_hz, divisor) = UNCONFIGURED_TIMER;
-    let view = StatsView::new(&UnwiredKernel, input_hz, divisor);
+    let view = StatsView::new(&UnmeasuredKernel, input_hz, divisor);
     let shell = Shell::with_stats(&view);
     let mut out = TextBuffer::new();
 

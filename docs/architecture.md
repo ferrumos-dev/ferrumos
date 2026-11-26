@@ -67,7 +67,7 @@ src/
 | `kernel/interrupts` | `TimerTickSink` décrit la réception directe d'événements, notamment en simulation. `TickSnapshot` convertit un relevé et la fréquence rationnelle du timer en durée entière. |
 | `kernel/scheduler` | `PriorityScheduler<N>` choisit `High`, puis `Normal`, puis `Low`. À priorité égale, l'ordre FIFO évolue sur cession ou réveil. Les doublons et dépassements de capacité sont refusés sans mutation. |
 | `kernel/executor` | `CooperativeExecutor<C, N>` conserve les fonctions et leur état. Un pas rend `Yield`, `Blocked` ou `Complete`. L'appel emprunte le contexte et utilise la pile du CPU appelant. |
-| `kernel/telemetry` | Conserver des comptes distincts pour les appels aux tâches, les interruptions timer livrées et les bascules CPU. Le fournisseur de `KernelSnapshot` assemble un relevé copié. `CapturedKernel` capture les sources réelles une fois, `UnwiredKernel` répond tant qu’aucune source n’est raccordée. |
+| `kernel/telemetry` | Conserver des comptes distincts pour les appels aux tâches, les interruptions timer livrées et les bascules CPU. Le fournisseur de `KernelSnapshot` assemble un relevé copié. `CapturedKernel` capture les sources réelles une fois et reste le seul fournisseur du noyau intégré. |
 | `drivers/serial`, `display`, `input`, `console.rs` | Piloter COM1 et PS/2, rendre le texte dans le framebuffer et conserver une ligne UTF-8 de capacité fixe. Les opérations matérielles restent hors des tests hôte. |
 | `drivers/storage`, `network` | Réserver les pilotes de stockage par blocs et de carte réseau. |
 | `services` | Construire les fonctionnalités de fichiers et de réseau à partir des interfaces du noyau et des pilotes. |
