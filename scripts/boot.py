@@ -193,6 +193,35 @@ def wait_for_timer(process: subprocess.Popen, serial: Path, deadline: float) -> 
     raise BootError("timed out waiting for periodic timer interrupts")
 
 
+def verify_stats_report(text: str) -> dict[str, str]:
+    """Require the stats report to read the mapped heap and the delivered ticks."""
+    match = re.search(r"^STATS_BEGIN$(.*?)^STATS_END$", text, re.MULTILINE | re.DOTALL)
+    if match is None:
+        raise BootError("missing kernel statistics report")
+    body = match.group(1)
+    lines = [line for line in body.splitlines() if line]
+    if len(lines) != 7:
+        raise BootError("the statistics report does not hold its seven measurements")
+    if "unavailable" in body:
+        raise BootError("the statistics report still has an unavailable measurement")
+    # The view pads every label to a fixed column, so the split is positional.
+    report = {line[:18].strip(): line[18:].strip() for line in lines}
+    heap = re.fullmatch(r"(\d+) B used of (\d+) B \(\d+\.\d %\)", report.get("heap", ""))
+    if heap is None or int(heap.group(2)) != 1024 * 1024:
+        raise BootError("the statistics report does not read the mapped kernel heap")
+    uptime = re.fullmatch(r"(\d+):(\d{2}):(\d{2})\.(\d{3})", report.get("uptime", ""))
+    if uptime is None:
+        raise BootError("the statistics report does not express its uptime")
+    hours, minutes, seconds, milliseconds = map(int, uptime.groups())
+    ticks = int(report.get("timer ticks", "0"))
+    # Same rational PIT conversion as the timer samples, from the report's own
+    # tick count. Host wall time stays excluded because TCG speed varies.
+    expected_ms = min(ticks * 11932 * 1000 // 1193182, (1 << 64) - 1)
+    if ticks <= 0 or ((hours * 60 + minutes) * 60 + seconds) * 1000 + milliseconds != expected_ms:
+        raise BootError("the statistics report's uptime does not match its tick count")
+    return report
+
+
 class Qmp:
     """Small synchronous QMP client; unsolicited events never satisfy a command."""
 
@@ -322,6 +351,8 @@ def smoke_test(image: Path, executable: str, timeout: float) -> None:
             summary["physical_memory"] = verify_memory_summary(boot_text)
             summary["heap"] = verify_heap_summary(boot_text)
             summary["timer"] = wait_for_timer(process, serial, deadline)
+            summary["stats"] = verify_stats_report(
+                wait_for_serial(process, serial, ("STATS_END",), deadline))
             for key in ("t", "e", "s", "x", "backspace", "t", "ret"):
                 qmp.execute("send-key", {"keys": [{"type": "qcode", "data": key}], "hold-time": 50})
                 time.sleep(0.08)

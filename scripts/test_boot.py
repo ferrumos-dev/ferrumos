@@ -133,6 +133,29 @@ class BootChecks(unittest.TestCase):
             with self.assertRaisesRegex(boot.BootError, "timed out"):
                 boot.wait_for_timer(process, log, time.monotonic() + 0.01)
 
+    def test_stats_report_requires_the_real_heap_and_a_consistent_uptime(self):
+        measured = ("STATS_BEGIN\n"
+                    "uptime            00:00:01.000\n"
+                    "heap              0 B used of 1048576 B (0.0 %)\n"
+                    "heap free         1048576 B\n"
+                    "runnable tasks    1\n"
+                    "timer ticks       100\n"
+                    "context switches  0\n"
+                    "dispatches        12\n"
+                    "STATS_END\n")
+        for text in ("",
+                     measured.replace("STATS_END", ""),
+                     measured.replace("dispatches        12\n", ""),
+                     measured.replace("0 B used of 1048576 B (0.0 %)", "unavailable"),
+                     measured.replace("1048576 B (0.0 %)", "65536 B (0.0 %)"),
+                     measured.replace("00:00:01.000", "00:00:02.000"),
+                     measured.replace("timer ticks       100", "timer ticks       0")):
+            with self.subTest(text=text), self.assertRaises(boot.BootError):
+                boot.verify_stats_report(text)
+        report = boot.verify_stats_report(measured)
+        self.assertEqual(report["timer ticks"], "100")
+        self.assertEqual(report["heap free"], "1048576 B")
+
     def test_uniform_or_truncated_screenshot_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             image = Path(temporary) / "screen.ppm"

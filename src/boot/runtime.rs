@@ -13,6 +13,9 @@ use crate::drivers::serial::SerialPort;
 use crate::kernel::executor::{CooperativeExecutor, TaskStatus};
 use crate::kernel::memory::MemoryReporter;
 use crate::kernel::scheduler::{Priority, TaskId};
+use crate::kernel::telemetry::CapturedKernel;
+use crate::ui::monitor::StatsView;
+use crate::ui::shell::StatsProvider;
 
 // Task identifiers are local to this executor. Keeping device ownership in
 // BootState lets the task borrow drivers without global mutable references.
@@ -113,6 +116,41 @@ fn diagnostics_step(state: &mut BootState<'_>) -> TaskStatus {
     let _ = state.console.serial.write_str("KERNEL_PRIORITY_OK\n");
     let _ = state.console.write_str("> ");
     TaskStatus::Complete
+}
+
+/// Report the kernel statistics once, over the diagnostic port.
+///
+/// The capture reads the heap, the ready set, the execution counters and the
+/// hardware clock while this function owns them, and the view formats that
+/// single sample afterwards. The tick total and the frequency used to express
+/// it come from the same clock reading, so the elapsed time matches the tick
+/// count printed next to it.
+///
+/// The two markers delimit the report in the serial log, which lets the boot
+/// test check that the measurements describe the real heap and a real tick
+/// count instead of placeholder values.
+fn report_stats(
+    heap: &memory::KernelHeap,
+    executor: &CooperativeExecutor<BootState<'_>, 2>,
+    serial: &mut SerialPort,
+) {
+    let clock = interrupts::clock_snapshot();
+    let counters = executor.counters().with_timer_ticks(clock.ticks());
+    let kernel = CapturedKernel::capture(heap, executor.runnable_count(), counters);
+    let view = StatsView::new(
+        &kernel,
+        clock.frequency_numerator_hz(),
+        clock.frequency_divisor(),
+    );
+    let _ = serial.write_str(
+        "STATS_BEGIN
+",
+    );
+    let _ = view.write_stats(serial);
+    let _ = serial.write_str(
+        "STATS_END
+",
+    );
 }
 
 /// Exercise the real mapped heap before handing it to other kernel consumers.
@@ -305,6 +343,7 @@ pub fn run(boot_info: &'static mut BootInfo) -> ! {
     let _ = state.console.serial.write_str("HEAP_IRQ_SAFE_OK\n");
     let mut last_sample = 0;
     let mut timer_samples = 0;
+    let mut stats_reported = false;
     loop {
         executor
             .wake(INPUT_TASK)
@@ -329,6 +368,10 @@ pub fn run(boot_info: &'static mut BootInfo) -> ! {
             );
             last_sample = clock.ticks();
             timer_samples += 1;
+        }
+        if timer_samples == 2 && !stats_reported {
+            stats_reported = true;
+            report_stats(heap, &executor, &mut state.console.serial);
         }
         // STI and HLT are adjacent in the CPU helper. A pending timer wakes
         // the CPU instead of being lost between enabling interrupts and sleep.
